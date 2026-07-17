@@ -5,6 +5,8 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         self.create_genesis_block()
+        self.pending_transactions = []
+        self.mining_reward = 10
 
     def create_genesis_block(self):
         genesis_block = Block(
@@ -23,7 +25,15 @@ class Blockchain:
         ProofOfWork.mine(new_block)
 
         self.chain.append(new_block)
+    def add_transaction(self, transaction):
 
+        if transaction.verify():
+
+            self.pending_transactions.append(transaction)
+
+            return True
+
+        return False
     def is_chain_valid(self):
         for i in range(1, len(self.chain)):
 
@@ -35,5 +45,25 @@ class Blockchain:
 
             if current.previous_hash != previous.hash:
                 return False
+
+        return True
+    def mine_pending_transactions(self, miner_address):
+
+        if len(self.pending_transactions) == 0:
+            return False
+
+        block = Block(
+            index=len(self.chain),
+            transactions=self.pending_transactions.copy(),
+            previous_hash=self.get_latest_block().hash,
+            miner=miner_address,
+            reward=self.mining_reward
+        )
+
+        ProofOfWork.mine(block)
+
+        self.chain.append(block)
+
+        self.pending_transactions = []
 
         return True

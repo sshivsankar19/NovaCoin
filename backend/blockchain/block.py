@@ -29,7 +29,7 @@ class Block:
         block_data = {
             "index": self.index,
             "timestamp": self.timestamp,
-            "transactions": self.transactions,
+            "transactions": [tx.to_dict() for tx in self.transactions],
             "previous_hash": self.previous_hash,
             "difficulty": self.difficulty,
             "nonce": self.nonce,
