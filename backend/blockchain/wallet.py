@@ -1,19 +1,23 @@
 from email.mime import message
 import hashlib
-from ecdsa import SigningKey, SECP256k1
+from ecdsa import SigningKey, VerifyingKey, SECP256k1
 from ecdsa import BadSignatureError
 
 class Wallet:
 
-    def __init__(self):
+    def __init__(self, generate_keys=True):
 
-        self.private_key = SigningKey.generate(curve=SECP256k1)
+        if generate_keys:
 
-        self.public_key = self.private_key.get_verifying_key()
+            self.private_key = SigningKey.generate(
+                curve=SECP256k1
+            )
 
-        self.address = hashlib.sha256(
-            self.public_key.to_string()
-        ).hexdigest()
+            self.public_key = self.private_key.get_verifying_key()
+
+            self.address = hashlib.sha256(
+                self.public_key.to_string()
+            ).hexdigest()
 
     def __repr__(self):
 
@@ -33,3 +37,29 @@ class Wallet:
 
         except BadSignatureError:
             return False
+    def to_dict(self):
+
+        return {
+            "private_key": self.private_key.to_string().hex(),
+            "public_key": self.public_key.to_string().hex(),
+            "address": self.address
+        }
+    @classmethod
+    def from_dict(cls, data):
+
+        wallet = cls(generate_keys=False)
+
+        wallet.private_key = SigningKey.from_string(
+            bytes.fromhex(data["private_key"]),
+            curve=SECP256k1
+        )
+
+        wallet.public_key = VerifyingKey.from_string(
+            bytes.fromhex(data["public_key"]),
+            curve=SECP256k1
+        )
+
+        wallet.address = data["address"]
+
+        return wallet
+    

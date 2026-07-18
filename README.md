@@ -1,49 +1,58 @@
 # Blockchain Crypto Miner
 
-A blockchain-based cryptocurrency miner built from scratch using Python and Flask.
+A blockchain-based cryptocurrency miner built from scratch using Python and Flask. The project implements a custom blockchain, proof-of-work mining, cryptographic wallets, digitally signed transactions, mining rewards, and balance validation. It is being developed as a complete cryptocurrency platform with a web interface and MetaMask integration.
+
+---
 
 ## Features
 
 ### Implemented
 
 - Custom Blockchain
-- Block Class
 - Genesis Block
 - SHA-256 Hashing
-- Chain Validation
+- Block Validation
 - Proof of Work (PoW) Mining
 - Nonce-Based Mining
-- Transaction Class
 - ECDSA Wallet Generation
-- Public and Private Key Generation
+- Public and Private Key Management
 - Wallet Address Generation
-- Digital Transaction Signatures
+- Digitally Signed Transactions
 - Transaction Signature Verification
+- Immutable Signed Transactions
 - Pending Transaction Pool
-- Mining Pending Transactions
-- Flask Backend API
+- Coinbase (Mining Reward) Transactions
+- Wallet Balance Calculation
+- Transaction Balance Validation
+- Object Serialization and Deserialization
+- Flask Backend
+
+---
 
 ### In Development
 
-- Mining Reward Transactions
-- Wallet Balance Calculation
+- REST API Endpoints
 - Blockchain Explorer API
-- REST APIs
 - MySQL Integration
 - Frontend Dashboard
-- MetaMask Integration
+- MetaMask Wallet Integration
 - Sandbox Mode
-- External Mining Pool Support (Optional)
+- Persistent Wallet Storage
+- Transaction History
+
+---
 
 ### Planned
 
 - Dynamic Mining Difficulty
 - Reward Halving
-- Real-Time Blockchain Statistics
+- Mining Pool Support
+- External Pool Connection (Optional)
 - Blockchain Explorer UI
-- Transaction History
-- Mining Dashboard
-- Network Simulation (Optional)
+- Real-Time Blockchain Statistics
+- Network Simulation
+
+---
 
 ## Tech Stack
 
@@ -57,22 +66,33 @@ A blockchain-based cryptocurrency miner built from scratch using Python and Flas
 - ECDSA Cryptography
 - MetaMask
 
+---
+
 ## Project Structure
 
 ```text
 backend/
 ├── blockchain/
+│   ├── block.py
+│   ├── blockchain.py
+│   ├── proof_of_work.py
+│   ├── transaction.py
+│   └── wallet.py
 ├── database/
 ├── miner/
 ├── routes/
-└── utils/
+├── utils/
+├── app.py
+├── config.py
+└── requirements.txt
 
 frontend/
-├── assets/
 ├── app.js
 ├── index.html
 └── style.css
 ```
+
+---
 
 ## Current Status
 
@@ -80,12 +100,15 @@ The backend currently supports:
 
 - Blockchain creation and validation
 - Proof of Work mining
-- Wallet generation using ECDSA
-- Public and private key management
+- ECDSA wallet generation
 - Wallet address generation
 - Digitally signed transactions
 - Transaction verification
-- Pending transaction pool
-- Mining signed transactions into blocks
+- Immutable transactions after signing
+- Pending transaction management
+- Coinbase mining rewards
+- Wallet balance calculation
+- Balance validation
+- Object serialization for blockchain, blocks, transactions, and wallets
 
-The next development phase focuses on mining rewards, wallet balances, REST APIs, frontend development, and MetaMask integration.
+The next phase focuses on REST APIs, frontend development, MySQL integration, MetaMask connectivity, and a blockchain explorer.

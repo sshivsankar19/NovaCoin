@@ -18,9 +18,16 @@ print(tx)
 print()
 
 print("Verified:", tx.verify())
+print("\nTrying to modify a signed transaction...")
 
-print("\nTampering with transaction...\n")
+try:
+    tx.amount = 500
+except RuntimeError as e:
+    print(e)
 
-tx.amount = 25000
+print("\nTrying to sign again...")
 
-print("Verified:", tx.verify())
+try:
+    tx.sign(wallet1)
+except RuntimeError as e:
+    print(e)

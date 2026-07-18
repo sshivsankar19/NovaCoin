@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, UTC
+from blockchain.transaction import Transaction
 
 
 class Block:
@@ -11,8 +12,6 @@ class Block:
         previous_hash: str,
         difficulty: int = 3,
         nonce: int = 0,
-        miner: str = "SYSTEM",
-        reward: int = 10,
     ):
         self.index = index
         self.timestamp = datetime.now(UTC).isoformat()
@@ -20,8 +19,6 @@ class Block:
         self.previous_hash = previous_hash
         self.difficulty = difficulty
         self.nonce = nonce
-        self.miner = miner
-        self.reward = reward
 
         self.hash = self.calculate_hash()
 
@@ -33,8 +30,6 @@ class Block:
             "previous_hash": self.previous_hash,
             "difficulty": self.difficulty,
             "nonce": self.nonce,
-            "miner": self.miner,
-            "reward": self.reward,
         }
 
         encoded_block = json.dumps(
@@ -44,7 +39,40 @@ class Block:
         ).encode()
 
         return hashlib.sha256(encoded_block).hexdigest()
+    def to_dict(self):
 
+        return {
+            "index": self.index,
+            "timestamp": self.timestamp,
+            "transactions": [
+                tx.to_dict()
+                for tx in self.transactions
+            ],
+            "previous_hash": self.previous_hash,
+            "difficulty": self.difficulty,
+            "nonce": self.nonce,
+            "hash": self.hash
+        }
+    @classmethod
+    def from_dict(cls, data):
+
+        transactions = [
+            Transaction.from_dict(tx)
+            for tx in data["transactions"]
+        ]
+
+        block = cls(
+            index=data["index"],
+            transactions=transactions,
+            previous_hash=data["previous_hash"],
+            difficulty=data["difficulty"],
+            nonce=data["nonce"]
+        )
+
+        block.timestamp = data["timestamp"]
+        block.hash = data["hash"]
+
+        return block
     def __repr__(self):
         return (
             f"Block(index={self.index}, "
