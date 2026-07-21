@@ -3,8 +3,7 @@ venv/
 
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.pyd
 
 # Environment Variables
@@ -17,17 +16,24 @@ __pycache__/
 # Logs
 *.log
 
-# Operating System
+# OS Files
 .DS_Store
 Thumbs.db
+
+# Python Tooling
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local Databases
+*.db
+*.sqlite3
 
 # Build
 build/
 dist/
+*.egg-info/
 
-# Python Cache
-.pytest_cache/
-.mypy_cache/
-
-# Local Database
-*.db
+# Flask
+instance/

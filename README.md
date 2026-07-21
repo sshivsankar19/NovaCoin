@@ -1,6 +1,6 @@
 # Blockchain Crypto Miner
 
-A blockchain-based cryptocurrency miner built from scratch using Python and Flask. The project implements a custom blockchain, proof-of-work mining, cryptographic wallets, digitally signed transactions, mining rewards, and balance validation. It is being developed as a complete cryptocurrency platform with a web interface and MetaMask integration.
+A blockchain-based cryptocurrency miner built from scratch using Python and Flask. The project demonstrates the core concepts behind blockchain technology, including Proof of Work mining, cryptographic wallets, digitally signed transactions, mining rewards, and REST APIs. Future development includes a web dashboard, MySQL persistence, MetaMask integration, sandbox mode, and optional mining pool support.
 
 ---
 
@@ -11,34 +11,50 @@ A blockchain-based cryptocurrency miner built from scratch using Python and Flas
 - Custom Blockchain
 - Genesis Block
 - SHA-256 Hashing
-- Block Validation
+- Chain Validation
 - Proof of Work (PoW) Mining
 - Nonce-Based Mining
 - ECDSA Wallet Generation
-- Public and Private Key Management
+- Public / Private Key Cryptography
 - Wallet Address Generation
 - Digitally Signed Transactions
 - Transaction Signature Verification
-- Immutable Signed Transactions
+- Immutable Transactions
 - Pending Transaction Pool
 - Coinbase (Mining Reward) Transactions
 - Wallet Balance Calculation
 - Transaction Balance Validation
-- Object Serialization and Deserialization
-- Flask Backend
+- Object Serialization / Deserialization
+- Flask REST API
+- Wallet Creation API
+- Mining API
+- Blockchain Explorer API
+
+---
+
+### REST API Endpoints
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/` | API status |
+| GET | `/health` | Health check |
+| GET | `/chain` | View the blockchain |
+| GET | `/wallet/new` | Generate a new wallet |
+| GET | `/wallet/<address>` | Get wallet balance |
+| POST | `/mine` | Mine a new block |
 
 ---
 
 ### In Development
 
-- REST API Endpoints
-- Blockchain Explorer API
-- MySQL Integration
+- Transaction API
+- Dedicated Mempool
+- Wallet Persistence
+- MySQL Database
 - Frontend Dashboard
-- MetaMask Wallet Integration
-- Sandbox Mode
-- Persistent Wallet Storage
+- Blockchain Explorer UI
 - Transaction History
+- Sandbox Mode
 
 ---
 
@@ -47,9 +63,9 @@ A blockchain-based cryptocurrency miner built from scratch using Python and Flas
 - Dynamic Mining Difficulty
 - Reward Halving
 - Mining Pool Support
-- External Pool Connection (Optional)
-- Blockchain Explorer UI
-- Real-Time Blockchain Statistics
+- Optional Real Mining Pool Integration
+- MetaMask Integration
+- Live Blockchain Statistics
 - Network Simulation
 
 ---
@@ -59,11 +75,11 @@ A blockchain-based cryptocurrency miner built from scratch using Python and Flas
 - Python
 - Flask
 - Flask-CORS
+- ECDSA
 - MySQL
 - HTML
 - CSS
 - JavaScript
-- ECDSA Cryptography
 - MetaMask
 
 ---
@@ -78,37 +94,37 @@ backend/
 │   ├── proof_of_work.py
 │   ├── transaction.py
 │   └── wallet.py
-├── database/
-├── miner/
-├── routes/
-├── utils/
 ├── app.py
 ├── config.py
 └── requirements.txt
 
 frontend/
-├── app.js
 ├── index.html
-└── style.css
+├── style.css
+└── app.js
 ```
 
 ---
 
 ## Current Status
 
-The backend currently supports:
+Completed:
 
-- Blockchain creation and validation
+- Blockchain engine
 - Proof of Work mining
-- ECDSA wallet generation
-- Wallet address generation
-- Digitally signed transactions
-- Transaction verification
-- Immutable transactions after signing
-- Pending transaction management
-- Coinbase mining rewards
-- Wallet balance calculation
+- Wallet generation
+- Digital signatures
+- Immutable transactions
+- Mining rewards
+- Wallet balance tracking
 - Balance validation
-- Object serialization for blockchain, blocks, transactions, and wallets
+- REST API for blockchain access, wallet management, and mining
 
-The next phase focuses on REST APIs, frontend development, MySQL integration, MetaMask connectivity, and a blockchain explorer.
+Upcoming:
+
+- Transaction submission API
+- Mempool implementation
+- Frontend integration
+- MySQL persistence
+- Mining pool support
+- MetaMask integration
