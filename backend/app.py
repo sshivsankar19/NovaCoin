@@ -3,7 +3,8 @@ from flask import request
 from flask_cors import CORS
 from blockchain.blockchain import Blockchain
 from blockchain.wallet import Wallet
-
+from blockchain.transaction_validator import TransactionValidator
+from blockchain.transaction import Transaction
 wallets = {}
 app = Flask(__name__)
 CORS(app)
@@ -47,6 +48,61 @@ def mine():
         "message": "Block mined successfully.",
         "block": chain.chain[-1].to_dict()
     }
+@app.route("/transaction", methods=["POST"])
+def add_transaction():
+
+    data = request.get_json()
+
+    if not data:
+        return {
+            "error": "No transaction data provided."
+        }, 400
+
+    try:
+        tx = Transaction.from_dict(data)
+
+    except Exception:
+        return {
+            "error": "Invalid transaction format."
+        }, 400
+
+    valid, message = TransactionValidator.validate(
+        tx,
+        chain
+    )
+
+    if not valid:
+
+        return {
+            "error": message
+        }, 400
+
+    chain.add_transaction(tx)
+
+    return {
+        "message": message
+    }
+@app.route("/transaction/create", methods=["POST"])
+def create_transaction():
+
+    data = request.get_json()
+
+    sender = wallets.get(data["sender"])
+
+    if sender is None:
+        return {
+            "error": "Unknown sender wallet."
+        }, 404
+
+    tx = Transaction(
+        sender.address,
+        data["receiver"],
+        data["amount"]
+    )
+
+    tx.sign(sender)
+
+    return tx.to_dict()
 @app.route("/wallet/new")
 def create_wallet():
 
@@ -57,6 +113,7 @@ def create_wallet():
     return {
         "address": wallet.address
     }
+
 print("__name__ =", __name__)
 
 if __name__ == "__main__":
