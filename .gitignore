@@ -20,20 +20,26 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Python Tooling
+# Flask
+instance/
+
+# Testing
 .pytest_cache/
-.mypy_cache/
 .coverage
 htmlcov/
 
-# Local Databases
-*.db
-*.sqlite3
+# Type Checkers
+.mypy_cache/
 
 # Build
 build/
 dist/
 *.egg-info/
 
-# Flask
-instance/
+# Local Databases
+*.db
+*.sqlite3
+
+# Temporary Files
+*.tmp
+*.bak

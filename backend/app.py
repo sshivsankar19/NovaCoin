@@ -113,8 +113,31 @@ def create_wallet():
     return {
         "address": wallet.address
     }
+@app.route("/mempool")
+def get_mempool():
 
-print("__name__ =", __name__)
+    return {
+        "count": len(chain.get_pending_transactions()),
+        "transactions": [
+            tx.to_dict()
+            for tx in chain.get_pending_transactions()
+        ]
+    }
+@app.route("/transaction/<txid>")
+def get_transaction(txid):
 
+    transaction, block = chain.get_transaction(txid)
+
+    if transaction is None:
+        return {
+            "error": "Transaction not found."
+        }, 404
+
+    data = transaction.to_dict()
+
+    data["confirmed"] = block is not None
+    data["block"] = block
+
+    return data
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)

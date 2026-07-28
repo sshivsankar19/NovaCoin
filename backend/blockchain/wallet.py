@@ -15,10 +15,25 @@ class Wallet:
 
             self.public_key = self.private_key.get_verifying_key()
 
-            self.address = hashlib.sha256(
-                self.public_key.to_string()
-            ).hexdigest()
+            self.address = Wallet.generate_address_from_public_key(
+                self.public_key
+            )
 
+    @staticmethod
+    def generate_address_from_public_key(public_key):
+
+        public_key_bytes = public_key.to_string()
+
+        sha256_hash = hashlib.sha256(
+            public_key_bytes
+        ).digest()
+
+        address = hashlib.blake2b(
+            sha256_hash,
+            digest_size=32
+        ).hexdigest()
+
+        return address
     def __repr__(self):
 
         return f"Wallet({self.address[:16]}...)"

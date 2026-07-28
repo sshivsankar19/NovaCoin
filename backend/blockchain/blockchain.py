@@ -74,7 +74,24 @@ class Blockchain:
         self.mempool.clear()
 
         return True
+    def get_pending_transactions(self):
 
+        return self.mempool.get_transactions()
+    def get_transaction(self, txid):
+
+        for tx in self.mempool.get_transactions():
+
+            if tx.txid == txid:
+                return tx, None
+
+        for block in self.chain:
+
+            for tx in block.transactions:
+
+                if tx.txid == txid:
+                    return tx, block.index
+
+        return None, None
     def get_balance(self, address):
 
         balance = 0

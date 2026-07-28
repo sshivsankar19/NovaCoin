@@ -15,10 +15,11 @@ class Transaction:
         self.receiver = receiver
         self.amount = amount
         self.timestamp = datetime.now(UTC).isoformat()
+        self.txid = self.calculate_hash()
         self._signed = False
         self.signature = None
         self.public_key = None
-
+        
     def calculate_hash(self):
 
         data = {
@@ -34,16 +35,21 @@ class Transaction:
             separators=(",", ":")
         ).encode()
 
-        return hashlib.sha256(encoded).hexdigest()
+        sha256_hash = hashlib.sha256(encoded).digest()
+
+        txid = hashlib.blake2b(
+            sha256_hash,
+            digest_size=32
+        ).hexdigest()
+
+        return txid
 
     def sign(self, wallet):
         if self._signed:
             raise RuntimeError(
                 "Transaction already signed."
             )
-        current_hash = self.calculate_hash()
-
-        self.signature = wallet.sign(current_hash)
+        self.signature = wallet.sign(self.txid)
         self.public_key = wallet.public_key
         self._signed = True
     @property
@@ -56,12 +62,10 @@ class Transaction:
         if self.signature is None:
             return False
 
-        current_hash = self.calculate_hash()
-
         try:
             return self.public_key.verify(
                 self.signature,
-                current_hash.encode()
+                self.txid.encode()
             )
 
         except BadSignatureError:
@@ -77,13 +81,14 @@ class Transaction:
         receiver = self.receiver[:12] + "..."
 
         return (
-            f"{sender} -> "
-            f"{receiver} "
+            f"{self.txid[:12]}... "
+            f"{sender} -> {receiver} "
             f"({self.amount})"
         )
     def to_dict(self):
 
         return {
+            "txid": self.txid,
             "sender": self.sender,
             "receiver": self.receiver,
             "amount": self.amount,
@@ -101,6 +106,7 @@ class Transaction:
         )
 
         tx.timestamp = data["timestamp"]
+        tx.txid = data["txid"]
 
         if data["signature"]:
             tx.signature = bytes.fromhex(
