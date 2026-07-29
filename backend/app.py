@@ -5,8 +5,10 @@ from blockchain.blockchain import Blockchain
 from blockchain.wallet import Wallet
 from blockchain.transaction_validator import TransactionValidator
 from blockchain.transaction import Transaction
+from database.postgres import init_db, db
 wallets = {}
 app = Flask(__name__)
+init_db(app)
 CORS(app)
 chain = Blockchain()
 @app.route("/")
@@ -140,4 +142,6 @@ def get_transaction(txid):
 
     return data
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(host="127.0.0.1", port=5000, debug=True)
