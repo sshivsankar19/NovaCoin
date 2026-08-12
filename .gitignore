@@ -1,45 +1,40 @@
-# Virtual Environment
-venv/
-
 # Python
 __pycache__/
 *.py[cod]
-*.pyd
+*$py.class
 
-# Environment Variables
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables / secrets
 .env
+.env.*
+!.env.example
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database / local storage
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
 
 # IDE
 .vscode/
 .idea/
 
-# Logs
-*.log
-
-# OS Files
+# OS
 .DS_Store
 Thumbs.db
 
-# Flask
-instance/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Type Checkers
-.mypy_cache/
-
-# Build
+# Build files
 build/
 dist/
 *.egg-info/
-
-# Local Databases
-*.db
-*.sqlite3
-
-# Temporary Files
-*.tmp
-*.bak

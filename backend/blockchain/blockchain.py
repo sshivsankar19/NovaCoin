@@ -6,11 +6,26 @@ from blockchain.transaction import Transaction, SYSTEM_ADDRESS
 
 class Blockchain:
 
-    def __init__(self, create_genesis=True):
+    def __init__(
+        self,
+        name="Blockchain Crypto Miner",
+        symbol="BCM",
+        algorithm="SHA256",
+        difficulty=3,
+        block_reward=10,
+        block_time=None,
+        create_genesis=True
+    ):
 
+        self.name = name
+        self.symbol = symbol
+        self.algorithm = algorithm
+        self.difficulty = difficulty
+        self.mining_reward = block_reward
+        self.block_time = block_time
+        self.db_id = None
         self.chain = []
         self.mempool = Mempool()
-        self.mining_reward = 10
 
         if create_genesis:
             self.create_genesis_block()
@@ -20,7 +35,8 @@ class Blockchain:
         genesis_block = Block(
             index=0,
             transactions=[],
-            previous_hash="0"
+            previous_hash="0",
+            difficulty=self.difficulty
         )
 
         self.chain.append(genesis_block)
@@ -32,6 +48,9 @@ class Blockchain:
     def add_block(self, new_block):
 
         new_block.previous_hash = self.get_latest_block().hash
+
+        # Blockchain difficulty is the source of truth.
+        new_block.difficulty = self.difficulty
 
         ProofOfWork.mine(new_block)
 
@@ -64,7 +83,8 @@ class Blockchain:
         block = Block(
             index=len(self.chain),
             transactions=transactions,
-            previous_hash=self.get_latest_block().hash
+            previous_hash=self.get_latest_block().hash,
+            difficulty=self.difficulty
         )
 
         ProofOfWork.mine(block)
@@ -74,16 +94,16 @@ class Blockchain:
         self.mempool.clear()
 
         return True
-    def get_pending_transactions(self):
 
-        return self.mempool.get_transactions()
     def get_transaction(self, txid):
 
+        # Search pending transactions first.
         for tx in self.mempool.get_transactions():
 
             if tx.txid == txid:
                 return tx, None
 
+        # Search confirmed transactions.
         for block in self.chain:
 
             for tx in block.transactions:
@@ -92,6 +112,7 @@ class Blockchain:
                     return tx, block.index
 
         return None, None
+
     def get_balance(self, address):
 
         balance = 0
@@ -115,10 +136,18 @@ class Blockchain:
             current = self.chain[i]
             previous = self.chain[i - 1]
 
+            # Verify block hash.
             if current.hash != current.calculate_hash():
                 return False
 
+            # Verify chain linkage.
             if current.previous_hash != previous.hash:
+                return False
+
+            # Verify block difficulty.
+            if not current.hash.startswith(
+                "0" * current.difficulty
+            ):
                 return False
 
         return True
@@ -127,12 +156,22 @@ class Blockchain:
 
         return {
 
+            "name": self.name,
+
+            "symbol": self.symbol,
+
+            "algorithm": self.algorithm,
+
+            "difficulty": self.difficulty,
+
+            "block_reward": self.mining_reward,
+
+            "block_time": self.block_time,
+
             "chain": [
                 block.to_dict()
                 for block in self.chain
             ],
-
-            "mining_reward": self.mining_reward,
 
             "pending_transactions": [
                 tx.to_dict()
@@ -143,16 +182,43 @@ class Blockchain:
     @classmethod
     def from_dict(cls, data):
 
-        blockchain = cls(create_genesis=False)
-
-        blockchain.mining_reward = data["mining_reward"]
+        blockchain = cls(
+            name=data.get(
+                "name",
+                "Blockchain Crypto Miner"
+            ),
+            symbol=data.get(
+                "symbol",
+                "BCM"
+            ),
+            algorithm=data.get(
+                "algorithm",
+                "SHA256"
+            ),
+            difficulty=data.get(
+                "difficulty",
+                3
+            ),
+            block_reward=data.get(
+                "block_reward",
+                data.get("mining_reward", 10)
+            ),
+            block_time=data.get(
+                "block_time",
+                None
+            ),
+            create_genesis=False
+        )
 
         blockchain.chain = [
             Block.from_dict(block)
             for block in data["chain"]
         ]
 
-        for tx in data["pending_transactions"]:
+        for tx in data.get(
+            "pending_transactions",
+            []
+        ):
 
             blockchain.mempool.add_transaction(
                 Transaction.from_dict(tx)
