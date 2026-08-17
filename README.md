@@ -116,6 +116,7 @@ Current API functionality includes:
                 PostgreSQL / Neon 
 ```
 ## Structure
+```text
 backend/
 |
 ├── blockchain/
@@ -163,6 +164,7 @@ backend/
 ├── config.py
 ├── requirements.txt
 └── README.md
+```
 ## Technology Stack
 - Python
 
@@ -186,7 +188,9 @@ backend/
 
 ## Project Status
 The project is under active development.
+
 The blockchain core, Proof-of-Work mining, wallet system, signed transactions, transaction validation, mempool, REST API, PostgreSQL persistence, persistent mining, and blockchain recovery are currently implemented.
+
 The mining pool, external cryptocurrency integration, frontend, Web3 integration, and cloud deployment are planned for subsequent development stages.
 
 
