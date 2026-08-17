@@ -9,7 +9,8 @@ class TransactionRepository:
     def save(
         transaction,
         blockchain_id,
-        block_id=None
+        block_id=None,
+        commit=True
     ):
 
         model = TransactionMapper.to_model(
@@ -19,7 +20,9 @@ class TransactionRepository:
         )
 
         db.session.add(model)
-        db.session.commit()
+
+        if commit:
+            db.session.commit()
 
         return model
 
@@ -47,7 +50,9 @@ class TransactionRepository:
 
         return db.session.execute(
             db.select(TransactionModel)
-            .where(TransactionModel.block_id == block_id)
+            .where(
+                TransactionModel.block_id == block_id
+            )
             .order_by(TransactionModel.id)
         ).scalars().all()
 
@@ -60,5 +65,7 @@ class TransactionRepository:
                 (TransactionModel.sender == address)
                 | (TransactionModel.receiver == address)
             )
-            .order_by(TransactionModel.timestamp.desc())
+            .order_by(
+                TransactionModel.timestamp.desc()
+            )
         ).scalars().all()

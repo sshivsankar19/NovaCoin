@@ -2,6 +2,9 @@ from blockchain.block import Block
 from blockchain.proof_of_work import ProofOfWork
 from blockchain.mempool import Mempool
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
+from database.postgres import db
+from database.repository.block_repository import BlockRepository
+from database.repository.transaction_repository import TransactionRepository
 
 
 class Blockchain:
@@ -87,10 +90,45 @@ class Blockchain:
             difficulty=self.difficulty
         )
 
+        # Mine first.
         ProofOfWork.mine(block)
 
+        try:
+
+            # Add block to SQLAlchemy session.
+            block_model = BlockRepository.save(
+                block,
+                self.db_id,
+                commit=False
+            )
+
+            # Generate block database ID without committing.
+            db.session.flush()
+
+            # Save every transaction belonging to this block.
+            for tx in transactions:
+
+                TransactionRepository.save(
+                    tx,
+                    self.db_id,
+                    block_id=block_model.id,
+                    commit=False
+                )
+
+            # Commit block + all transactions together.
+            db.session.commit()
+
+        except Exception:
+
+            db.session.rollback()
+
+            raise
+
+        # Only update in-memory blockchain after
+        # database persistence succeeds.
         self.chain.append(block)
 
+        # Only clear the mempool after successful commit.
         self.mempool.clear()
 
         return True

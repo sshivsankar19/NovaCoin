@@ -3,10 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment
+# Virtual environments
 venv/
 .venv/
 env/
+ENV/
+
+# Accidental nested test environments
+**/tests/tests/
 
 # Environment variables / secrets
 .env
@@ -18,7 +22,7 @@ env/
 .coverage
 htmlcov/
 
-# Database / local storage
+# Local databases
 *.db
 *.sqlite
 *.sqlite3
@@ -34,7 +38,7 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Build files
+# Build / packaging
 build/
 dist/
 *.egg-info/

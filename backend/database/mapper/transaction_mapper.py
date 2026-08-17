@@ -1,6 +1,9 @@
 from datetime import datetime
 
+from ecdsa import SECP256k1, VerifyingKey
+
 from database.models.transaction_model import TransactionModel
+from blockchain.transaction import Transaction
 
 
 class TransactionMapper:
@@ -40,15 +43,25 @@ class TransactionMapper:
     @staticmethod
     def to_domain(model):
 
-        return {
-            "txid": model.txid,
-            "blockchain_id": model.blockchain_id,
-            "block_id": model.block_id,
-            "sender": model.sender,
-            "receiver": model.receiver,
-            "amount": model.amount,
-            "timestamp": model.timestamp,
-            "signature": model.signature,
-            "public_key": model.public_key,
-            "status": model.status
-        }
+        transaction = Transaction(
+            model.sender,
+            model.receiver,
+            float(model.amount)
+        )
+
+        transaction.txid = model.txid
+        transaction.timestamp = model.timestamp.isoformat()
+
+        if model.signature:
+            transaction.signature = bytes.fromhex(
+                model.signature
+            )
+            transaction._signed = True
+
+        if model.public_key:
+            transaction.public_key = VerifyingKey.from_string(
+                bytes.fromhex(model.public_key),
+                curve=SECP256k1
+            )
+
+        return transaction

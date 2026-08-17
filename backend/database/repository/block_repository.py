@@ -6,7 +6,7 @@ from database.mapper.block_mapper import BlockMapper
 class BlockRepository:
 
     @staticmethod
-    def save(block, blockchain_id):
+    def save(block, blockchain_id, commit=True):
 
         model = BlockMapper.to_model(
             block,
@@ -14,7 +14,9 @@ class BlockRepository:
         )
 
         db.session.add(model)
-        db.session.commit()
+
+        if commit:
+            db.session.commit()
 
         return model
 
@@ -47,3 +49,16 @@ class BlockRepository:
             )
             .order_by(BlockModel.height)
         ).scalars().all()
+
+    @staticmethod
+    def get_latest(blockchain_id):
+
+        return db.session.execute(
+            db.select(BlockModel)
+            .where(
+                BlockModel.blockchain_id == blockchain_id
+            )
+            .order_by(
+                BlockModel.height.desc()
+            )
+        ).scalars().first()
