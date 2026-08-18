@@ -2,7 +2,7 @@
 
 A blockchain-based cryptocurrency mining and management system built with Python.
 
-The project implements a custom Proof-of-Work blockchain with wallets, digitally signed transactions, transaction validation, a mempool, persistent cloud-backed storage, and a REST API.
+The project implements a custom Proof-of-Work blockchain with wallets, digitally signed transactions, transaction validation, a mempool, persistent cloud-backed storage, and a mining pool foundation.
 
 ## Current Features
 
@@ -33,7 +33,6 @@ Private keys are not stored in PostgreSQL.
 
 - Transaction creation
 - Transaction IDs
-- Transaction hashing
 - ECDSA digital signatures
 - Signature verification
 - Transaction validation
@@ -61,7 +60,26 @@ Private keys are not stored in PostgreSQL.
 - Persistent mined transactions
 - Atomic database persistence for blocks and transactions
 
-### Database
+### Mining Pool
+
+- Mining pool database model
+- Miner/worker registration model
+- Mining job model
+- Mining share model
+- Mining pool repositories
+- Miner repositories
+- Mining job repositories
+- Share repositories
+- Pool job generation
+- Share submission foundation
+- Pool share difficulty
+- Network difficulty and pool difficulty separation
+- Accepted/rejected share tracking
+- Block-candidate detection foundation
+
+The mining pool is currently under active development.
+
+## Database
 
 - PostgreSQL
 - Neon cloud PostgreSQL
@@ -70,11 +88,15 @@ Private keys are not stored in PostgreSQL.
 - Persistent block records
 - Persistent transaction records
 - Persistent wallet records
+- Mining pool persistence
+- Miner persistence
+- Mining job persistence
+- Mining share persistence
 - Repository pattern
 - Mapper pattern
 - Blockchain recovery from PostgreSQL
 
-### REST API
+## REST API
 
 Current API functionality includes:
 
@@ -88,32 +110,46 @@ Current API functionality includes:
 - Transaction lookup
 - Block mining
 
+Mining pool API endpoints will be added after the pool service is finalized.
+
 ## Architecture
 
 ```text
-                    Frontend
-                       |
-                       v
-                  Flask REST API
-                       |
-                       v
-                Blockchain Engine
-                 /             \
-                /               \
-           Mempool            Mining
-                \               /
-                 \             /
-                  v           v
-                  Database Layer
-                       |
-          +------------+------------+
-          |            |            |
-       Models       Mappers    Repositories
-          |            |            |
-          +------------+------------+
-                       |
-                       v
-                PostgreSQL / Neon 
+                         Frontend
+                            |
+                            v
+                       Flask REST API
+                            |
+                            v
+                    Blockchain Engine
+                     /            \
+                    /              \
+               Mempool            Mining
+                    \              /
+                     \            /
+                      v          v
+                    Database Layer
+                          |
+              +-----------+-----------+
+              |           |           |
+           Models      Mappers   Repositories
+              |           |           |
+              +-----------+-----------+
+                          |
+                          v
+                   PostgreSQL / Neon
+
+
+                     Mining Pool
+                          |
+              +-----------+-----------+
+              |           |           |
+            Miners      Jobs        Shares
+              |           |           |
+              +-----------+-----------+
+                          |
+                          v
+                    Pool Accounting
 ```
 ## Structure
 ```text
@@ -186,11 +222,36 @@ backend/
 
 - Git / GitHub
 
+## Persistence
+
+Blockchain state is persisted in PostgreSQL.
+
+The application can:
+
+- Create a blockchain record.
+
+- Persist the genesis block.
+
+- Persist mined blocks.
+
+- Persist transactions.
+
+- Recover blocks after restarting Flask.
+
+- Recover transactions after restarting Flask.
+
+- Recalculate wallet balances from recovered blockchain data.
+
+The block and its transactions are persisted together using a database transaction so incomplete persistence can be rolled back.
+
+Mining pool entities are also persisted in PostgreSQL, including pools, miners, jobs, and shares.
+
 ## Project Status
+
 The project is under active development.
 
-The blockchain core, Proof-of-Work mining, wallet system, signed transactions, transaction validation, mempool, REST API, PostgreSQL persistence, persistent mining, and blockchain recovery are currently implemented.
+The blockchain core, Proof-of-Work mining, wallet system, signed transactions, transaction validation, mempool, REST API, PostgreSQL persistence, persistent mining, blockchain recovery, and mining pool database foundation are implemented.
 
-The mining pool, external cryptocurrency integration, frontend, Web3 integration, and cloud deployment are planned for subsequent development stages.
+The mining pool service is currently being developed, including job distribution, share validation, pool difficulty, and reward accounting.
 
-
+External cryptocurrency integration, frontend, Web3 integration, and cloud deployment are planned for subsequent development stages.
