@@ -1,10 +1,15 @@
+from datetime import datetime, UTC
+
 from database.postgres import db
 from database.models.mining_job_model import MiningJobModel
 from database.models.share_model import ShareModel
 from database.repository.mining_job_repository import MiningJobRepository
 from database.repository.share_repository import ShareRepository
 from database.repository.miner_repository import MinerRepository
+
 from blockchain.block import Block
+from blockchain.transaction import Transaction, SYSTEM_ADDRESS
+from miner.block_submission_service import BlockSubmissionService
 
 
 class MiningPoolService:
@@ -13,6 +18,7 @@ class MiningPoolService:
     def create_job(
         pool_id,
         blockchain,
+        miner_address,
         share_difficulty=None
     ):
 
@@ -29,9 +35,23 @@ class MiningPoolService:
                 "Share difficulty must be lower than network difficulty."
             )
 
+        reward_tx = Transaction(
+            SYSTEM_ADDRESS,
+            miner_address,
+            blockchain.mining_reward
+        )
+
+        transactions = [
+            reward_tx
+        ]
+
+        transactions.extend(
+            blockchain.get_pending_transactions()
+        )
+
         block = Block(
             index=len(blockchain.chain),
-            transactions=[],
+            transactions=transactions,
             previous_hash=latest_block.hash,
             difficulty=blockchain.difficulty
         )
@@ -39,7 +59,10 @@ class MiningPoolService:
         block_template = {
             "index": block.index,
             "timestamp": block.timestamp,
-            "transactions": [],
+            "transactions": [
+                tx.to_dict()
+                for tx in transactions
+            ],
             "previous_hash": block.previous_hash,
             "difficulty": block.difficulty
         }
@@ -59,6 +82,7 @@ class MiningPoolService:
         MiningJobRepository.save(job)
 
         return job
+
     @staticmethod
     def submit_share(
         job_id,
@@ -83,19 +107,10 @@ class MiningPoolService:
         if miner is None:
             return False, "Miner not found."
 
-        data = job.block_data.copy()
-
-        block = Block(
-            index=data["index"],
-            transactions=[],
-            previous_hash=data["previous_hash"],
-            difficulty=data["difficulty"],
-            nonce=nonce
+        block = BlockSubmissionService.apply_nonce(
+            job,
+            nonce
         )
-
-        block.timestamp = data["timestamp"]
-
-        block.hash = block.calculate_hash()
 
         miner.total_shares += 1
 
@@ -145,6 +160,11 @@ class MiningPoolService:
             difficulty=job.share_difficulty,
             status=status
         )
+
+        if is_network_solution:
+
+            job.status = "completed"
+            job.completed_at = datetime.now(UTC)
 
         ShareRepository.save(
             share,

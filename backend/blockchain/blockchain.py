@@ -2,9 +2,7 @@ from blockchain.block import Block
 from blockchain.proof_of_work import ProofOfWork
 from blockchain.mempool import Mempool
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
-from database.postgres import db
-from database.repository.block_repository import BlockRepository
-from database.repository.transaction_repository import TransactionRepository
+from database.block_persistence import BlockPersistence
 
 
 class Blockchain:
@@ -50,9 +48,10 @@ class Blockchain:
 
     def add_block(self, new_block):
 
-        new_block.previous_hash = self.get_latest_block().hash
+        new_block.previous_hash = (
+            self.get_latest_block().hash
+        )
 
-        # Blockchain difficulty is the source of truth.
         new_block.difficulty = self.difficulty
 
         ProofOfWork.mine(new_block)
@@ -90,58 +89,26 @@ class Blockchain:
             difficulty=self.difficulty
         )
 
-        # Mine first.
         ProofOfWork.mine(block)
 
-        try:
+        BlockPersistence.save(
+            block,
+            self.db_id
+        )
 
-            # Add block to SQLAlchemy session.
-            block_model = BlockRepository.save(
-                block,
-                self.db_id,
-                commit=False
-            )
-
-            # Generate block database ID without committing.
-            db.session.flush()
-
-            # Save every transaction belonging to this block.
-            for tx in transactions:
-
-                TransactionRepository.save(
-                    tx,
-                    self.db_id,
-                    block_id=block_model.id,
-                    commit=False
-                )
-
-            # Commit block + all transactions together.
-            db.session.commit()
-
-        except Exception:
-
-            db.session.rollback()
-
-            raise
-
-        # Only update in-memory blockchain after
-        # database persistence succeeds.
         self.chain.append(block)
 
-        # Only clear the mempool after successful commit.
         self.mempool.clear()
 
         return True
 
     def get_transaction(self, txid):
 
-        # Search pending transactions first.
         for tx in self.mempool.get_transactions():
 
             if tx.txid == txid:
                 return tx, None
 
-        # Search confirmed transactions.
         for block in self.chain:
 
             for tx in block.transactions:
@@ -174,15 +141,12 @@ class Blockchain:
             current = self.chain[i]
             previous = self.chain[i - 1]
 
-            # Verify block hash.
             if current.hash != current.calculate_hash():
                 return False
 
-            # Verify chain linkage.
             if current.previous_hash != previous.hash:
                 return False
 
-            # Verify block difficulty.
             if not current.hash.startswith(
                 "0" * current.difficulty
             ):
