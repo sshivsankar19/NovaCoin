@@ -7,6 +7,15 @@ class ShareModel(db.Model):
 
     __tablename__ = "mining_shares"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "mining_job_id",
+            "miner_id",
+            "nonce",
+            name="uq_mining_share_job_miner_nonce"
+        ),
+    )
+
     id = db.Column(
         db.Integer,
         primary_key=True

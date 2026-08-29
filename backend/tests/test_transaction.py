@@ -8,4 +8,4 @@ t = Transaction(
 
 print(t)
 
-print(t.transaction_hash)
+print(t.txid)

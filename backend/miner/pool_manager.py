@@ -42,6 +42,14 @@ class PoolManager:
         worker_name
     ):
 
+        pool = MiningPoolRepository.get_by_id(pool_id)
+
+        if pool is None:
+            raise ValueError("Mining pool not found.")
+
+        if not pool.is_active:
+            raise ValueError("Mining pool is not active.")
+
         miner = MinerModel(
             mining_pool_id=pool_id,
             wallet_address=wallet_address,
@@ -59,10 +67,12 @@ class PoolManager:
     @staticmethod
     def get_job(
         pool_id,
-        blockchain
+        blockchain,
+        miner_address
     ):
 
         return MiningPoolService.create_job(
             pool_id,
-            blockchain
+            blockchain,
+            miner_address
         )

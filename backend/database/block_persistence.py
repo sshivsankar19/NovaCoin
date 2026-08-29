@@ -6,7 +6,7 @@ from database.repository.transaction_repository import TransactionRepository
 class BlockPersistence:
 
     @staticmethod
-    def save(block, blockchain_id):
+    def save(block, blockchain_id, commit=True):
 
         try:
 
@@ -15,6 +15,10 @@ class BlockPersistence:
                 blockchain_id,
                 commit=False
             )
+
+            # The database assigns the primary key when the pending block is
+            # flushed.  Transactions need that key for their block_id.
+            db.session.flush()
 
             for transaction in block.transactions:
 
@@ -25,12 +29,14 @@ class BlockPersistence:
                     commit=False
                 )
 
-            db.session.commit()
+            if commit:
+                db.session.commit()
 
             return block_model
 
         except Exception:
 
-            db.session.rollback()
+            if commit:
+                db.session.rollback()
 
             raise

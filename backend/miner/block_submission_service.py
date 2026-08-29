@@ -1,8 +1,14 @@
 from database.block_persistence import BlockPersistence
+from database.models.payout_model import PayoutModel
 from blockchain.block import Block
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
 from datetime import datetime, UTC
+from decimal import Decimal
 from database.postgres import db
+from database.repository.mining_pool_repository import MiningPoolRepository
+from database.repository.mining_job_repository import MiningJobRepository
+from database.repository.payout_repository import PayoutRepository
+from sqlalchemy.exc import IntegrityError
 
 class BlockSubmissionService:
 
@@ -47,35 +53,100 @@ class BlockSubmissionService:
         nonce
     ):
 
-        block = BlockSubmissionService.apply_nonce(
-            job,
-            nonce
-        )
+        pool = MiningPoolRepository.get_by_id(job.mining_pool_id)
+
+        if pool is None or not pool.is_active:
+            return False, "Mining pool is not active."
+
+        if miner.mining_pool_id != job.mining_pool_id:
+            return False, "Miner does not belong to this mining pool."
+
+        if job.status != "active":
+            return False, "Mining job is no longer active."
+
+        block = BlockSubmissionService.apply_nonce(job, nonce)
+
+        if not block.transactions:
+            return False, "Mining job does not contain a reward transaction."
+
+        reward_transaction = block.transactions[0]
+
+        if reward_transaction.sender != SYSTEM_ADDRESS:
+            return False, "Mining job has an invalid reward transaction."
+
+        if reward_transaction.receiver != miner.wallet_address:
+            return False, "Winning miner does not match the job reward recipient."
 
         if not block.hash.startswith(job.target):
             return False, "Block does not satisfy network difficulty."
 
         latest_block = blockchain.get_latest_block()
 
-        if block.previous_hash != latest_block.hash:
+        if (
+            block.previous_hash != latest_block.hash
+            or block.index != len(blockchain.chain)
+        ):
+            # A share may already be staged by submit_share.  It must not be
+            # committed when the job has become stale between validation and
+            # submission.
+            db.session.rollback()
+            job = MiningJobRepository.get_by_id(job.id)
+            job.status = "stale"
+            job.completed_at = datetime.now(UTC)
+            db.session.commit()
             return False, "Block is based on an outdated chain."
 
-        if block.index != len(blockchain.chain):
-            return False, "Invalid block height."
+        try:
+            # Keep block rows, the winning job, and any staged share in the
+            # same database transaction.
+            block_model = BlockPersistence.save(
+                block,
+                blockchain.db_id,
+                commit=False
+            )
 
-        BlockPersistence.save(
-            block,
-            blockchain.db_id
-        )
+            gross_reward = Decimal(str(reward_transaction.amount))
+            fee_percent = Decimal(str(pool.fee_percent))
+            pool_fee = gross_reward * fee_percent / Decimal("100")
+            miner_reward = gross_reward - pool_fee
 
+            if PayoutRepository.get_by_block(block_model.id):
+                raise ValueError(
+                    "A payout has already been recorded for this block."
+                )
+
+            payout = PayoutModel(
+                mining_pool_id=pool.id,
+                miner_id=miner.id,
+                block_id=block_model.id,
+                gross_reward=gross_reward,
+                pool_fee=pool_fee,
+                miner_reward=miner_reward,
+                status="recorded"
+            )
+            PayoutRepository.save(payout, commit=False)
+
+            job.status = "completed"
+            job.completed_at = datetime.now(UTC)
+
+            MiningJobRepository.mark_stale_for_blockchain(
+                blockchain.db_id,
+                block.hash
+            )
+
+            db.session.commit()
+
+        except IntegrityError:
+            db.session.rollback()
+            return False, "A payout has already been recorded for this block."
+
+        except Exception:
+            db.session.rollback()
+            return False, "Unable to persist submitted block."
+
+        # Update in-memory state only after the database transaction succeeds.
         blockchain.chain.append(block)
-
         blockchain.mempool.clear()
-
-        job.status = "completed"
-        job.completed_at = datetime.now(UTC)
-
-        db.session.commit()
 
         return True, {
             "message": "Block successfully submitted.",

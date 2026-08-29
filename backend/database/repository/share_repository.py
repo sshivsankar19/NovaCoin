@@ -47,3 +47,15 @@ class ShareRepository:
                 ShareModel.submitted_at
             )
         ).scalars().all()
+
+    @staticmethod
+    def get_by_job_miner_nonce(job_id, miner_id, nonce):
+
+        return db.session.execute(
+            db.select(ShareModel)
+            .where(
+                ShareModel.mining_job_id == job_id,
+                ShareModel.miner_id == miner_id,
+                ShareModel.nonce == nonce
+            )
+        ).scalar_one_or_none()

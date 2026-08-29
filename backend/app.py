@@ -8,13 +8,18 @@ from blockchain.transaction import Transaction
 from database.postgres import init_db, db
 from database.models import BlockchainModel
 from database.blockchain_loader import initialize_blockchain
+from database.block_persistence import BlockPersistence
+from routes.pool_routes import create_pool_blueprint
 wallets = {}
 app = Flask(__name__)
 init_db(app)
 CORS(app)
-chain = Blockchain()
+chain = Blockchain(
+    block_persister=BlockPersistence.save
+)
 with app.app_context():
     initialize_blockchain(chain)
+app.register_blueprint(create_pool_blueprint(chain))
 @app.route("/")
 def home():
     return {

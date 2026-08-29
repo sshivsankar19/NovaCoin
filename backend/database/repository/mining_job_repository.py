@@ -1,5 +1,7 @@
 from database.postgres import db
 from database.models.mining_job_model import MiningJobModel
+from database.models.mining_pool_model import MiningPoolModel
+from datetime import datetime, UTC
 
 
 class MiningJobRepository:
@@ -35,3 +37,23 @@ class MiningJobRepository:
                 MiningJobModel.created_at.desc()
             )
         ).scalars().first()
+
+    @staticmethod
+    def mark_stale_for_blockchain(blockchain_id, current_tip_hash):
+        """Expire active jobs that were built on an older chain tip."""
+
+        db.session.execute(
+            db.update(MiningJobModel)
+            .where(
+                MiningJobModel.status == "active",
+                MiningJobModel.previous_hash != current_tip_hash,
+                MiningJobModel.mining_pool_id.in_(
+                    db.select(MiningPoolModel.id)
+                    .where(MiningPoolModel.blockchain_id == blockchain_id)
+                )
+            )
+            .values(
+                status="stale",
+                completed_at=datetime.now(UTC)
+            )
+        )

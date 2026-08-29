@@ -2,7 +2,6 @@ from blockchain.block import Block
 from blockchain.proof_of_work import ProofOfWork
 from blockchain.mempool import Mempool
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
-from database.block_persistence import BlockPersistence
 
 
 class Blockchain:
@@ -15,7 +14,8 @@ class Blockchain:
         difficulty=3,
         block_reward=10,
         block_time=None,
-        create_genesis=True
+        create_genesis=True,
+        block_persister=None
     ):
 
         self.name = name
@@ -24,6 +24,7 @@ class Blockchain:
         self.difficulty = difficulty
         self.mining_reward = block_reward
         self.block_time = block_time
+        self.block_persister = block_persister
         self.db_id = None
         self.chain = []
         self.mempool = Mempool()
@@ -91,10 +92,16 @@ class Blockchain:
 
         ProofOfWork.mine(block)
 
-        BlockPersistence.save(
-            block,
-            self.db_id
-        )
+        if self.block_persister:
+            if self.db_id is None:
+                raise RuntimeError(
+                    "A persistent blockchain requires a database ID."
+                )
+
+            self.block_persister(
+                block,
+                self.db_id
+            )
 
         self.chain.append(block)
 
