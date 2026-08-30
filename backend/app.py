@@ -13,6 +13,8 @@ from routes.pool_routes import create_pool_blueprint
 wallets = {}
 app = Flask(__name__)
 init_db(app)
+app.config.setdefault("POOL_JOB_TTL_SECONDS", 120)
+app.config.setdefault("POOL_INACTIVITY_SECONDS", 120)
 CORS(app)
 chain = Blockchain(
     block_persister=BlockPersistence.save

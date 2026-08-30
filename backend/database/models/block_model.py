@@ -5,6 +5,14 @@ class BlockModel(db.Model):
 
     __tablename__ = "blocks"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "blockchain_id",
+            "height",
+            name="uq_blockchain_height"
+        ),
+    )
+
     id = db.Column(
         db.Integer,
         primary_key=True

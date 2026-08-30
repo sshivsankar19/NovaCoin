@@ -7,6 +7,13 @@ class MiningPoolModel(db.Model):
 
     __tablename__ = "mining_pools"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "blockchain_id",
+            name="uq_mining_pool_blockchain"
+        ),
+    )
+
     id = db.Column(
         db.Integer,
         primary_key=True

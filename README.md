@@ -255,3 +255,63 @@ The blockchain core, Proof-of-Work mining, wallet system, signed transactions, t
 The mining pool service is currently being developed, including job distribution, share validation, pool difficulty, and reward accounting.
 
 External cryptocurrency integration, frontend, Web3 integration, and cloud deployment are planned for subsequent development stages.
+
+## Mining Pool Operations
+
+The pool uses a layered design: Flask routes validate HTTP requests, pool services enforce job/share rules, repositories access PostgreSQL, and SQLAlchemy models persist pools, miners, jobs, shares, and payout accounting. A pool job contains an exact block template. Workers reconstruct it with the project `Transaction.from_dict()` and `Block.calculate_hash()` implementation; they never write pool records directly.
+
+### Worker registration and authentication
+
+`POST /pool/<pool_id>/miners` returns the miner metadata and a one-time `worker_api_key`. The server stores only its SHA-256 hash. The worker sends the raw credential in `X-Worker-API-Key` for job requests, share submissions, and heartbeats. Normal pool, miner, statistics, jobs, and share responses never expose the credential.
+
+### Job lifecycle
+
+Jobs are owned by one miner and move from `active` to `completed`, `stale`, or `expired`.
+
+- A job is stale when its previous hash no longer matches the chain tip.
+- A job expires after `POOL_JOB_TTL_SECONDS` (120 seconds by default).
+- Completed, stale, and expired jobs reject shares.
+- Each job embeds a system reward transaction for its owning worker wallet; a different miner cannot submit the winning result.
+
+### Pool API
+
+- `POST /pool` — create a pool for the persisted blockchain.
+- `POST /pool/<pool_id>/miners` — register a worker and obtain its one-time API key.
+- `GET /pool/<pool_id>/job?miner_id=<id>&miner_address=<address>` — authenticated job request.
+- `POST /pool/share` — authenticated share submission.
+- `POST /pool/<pool_id>/miners/<miner_id>/heartbeat` — authenticated worker activity update.
+- `GET /pool/<pool_id>`, `/miners`, `/miners/<miner_id>` — pool/miner status and accounting.
+- `GET /pool/<pool_id>/jobs` and `/shares` — paginated operational history (`limit`, `offset`; maximum limit 100).
+- `GET /pool/<pool_id>/payouts` and `/miners/<miner_id>/payouts` — payout accounting history.
+
+Pool and miner hash rates are observed worker-reported rates (`hashes_checked / elapsed_seconds`) supplied in authenticated heartbeats and share submissions. They are operational estimates rather than a claim of measured hardware capacity. Pool statistics include accepted/rejected counts and rates, block/payout totals, gross rewards, fees, and net miner rewards.
+
+### Payout accounting
+
+For a successful pool block, the system records one payout in the same database transaction as the block, transactions, winning share, and job completion:
+
+```text
+pool_fee = embedded_reward × fee_percent / 100
+miner_reward = embedded_reward - pool_fee
+```
+
+The accounting record does not alter the existing system reward transaction or create a separate wallet ledger.
+
+### Simulated worker
+
+Run the worker after registering a miner:
+
+```powershell
+cd backend
+.\venv\Scripts\python.exe -m miner.worker `
+  --api-base-url http://127.0.0.1:5000 `
+  --pool-id 1 --miner-id 1 --miner-address <wallet-address> `
+  --api-key <one-time-registration-key> `
+  --max-runtime-seconds 60
+```
+
+Useful controls include `--nonce-start`, `--max-nonce`, `--max-shares`, `--request-delay-seconds`, and `--heartbeat-interval-seconds`. The worker only sends a request when a nonce meets the pool share target, reloads after terminal job responses, and prints attempts, shares, blocks, elapsed time, and approximate hash rate.
+
+### Current limitations
+
+This is a simulated single-node pool. It does not implement a Stratum protocol, distributed chain-tip locking, adaptive difficulty, PPS/PPLNS payout distribution, credential rotation, rate limiting, or actual payout transfers. Schema changes require an explicit migration; `db.create_all()` does not alter existing Neon tables.

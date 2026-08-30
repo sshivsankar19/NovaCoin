@@ -41,3 +41,15 @@ class MinerRepository:
                 MinerModel.mining_pool_id == pool_id
             )
         ).scalars().all()
+
+    @staticmethod
+    def get_by_pool_and_wallet(pool_id, wallet_address):
+
+        return db.session.execute(
+            db.select(MinerModel)
+            .where(
+                MinerModel.mining_pool_id == pool_id,
+                MinerModel.wallet_address == wallet_address
+            )
+            .order_by(MinerModel.id)
+        ).scalars().first()

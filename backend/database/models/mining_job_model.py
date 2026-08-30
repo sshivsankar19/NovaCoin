@@ -18,6 +18,13 @@ class MiningJobModel(db.Model):
         nullable=False
     )
 
+    miner_id = db.Column(
+        db.Integer,
+        db.ForeignKey("miners.id"),
+        nullable=False,
+        index=True
+    )
+
     block_height = db.Column(
         db.Integer,
         nullable=False
@@ -65,4 +72,10 @@ class MiningJobModel(db.Model):
     completed_at = db.Column(
         db.DateTime(timezone=True),
         nullable=True
+    )
+
+    expires_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        index=True
     )

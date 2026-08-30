@@ -49,6 +49,23 @@ class ShareRepository:
         ).scalars().all()
 
     @staticmethod
+    def get_by_pool(pool_id, limit=50, offset=0):
+
+        from database.models.mining_job_model import MiningJobModel
+
+        return db.session.execute(
+            db.select(ShareModel)
+            .join(
+                MiningJobModel,
+                ShareModel.mining_job_id == MiningJobModel.id
+            )
+            .where(MiningJobModel.mining_pool_id == pool_id)
+            .order_by(ShareModel.submitted_at.desc())
+            .limit(limit)
+            .offset(offset)
+        ).scalars().all()
+
+    @staticmethod
     def get_by_job_miner_nonce(job_id, miner_id, nonce):
 
         return db.session.execute(

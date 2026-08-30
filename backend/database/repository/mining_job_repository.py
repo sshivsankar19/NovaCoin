@@ -39,6 +39,37 @@ class MiningJobRepository:
         ).scalars().first()
 
     @staticmethod
+    def get_by_pool(pool_id, limit=50, offset=0):
+
+        return db.session.execute(
+            db.select(MiningJobModel)
+            .where(MiningJobModel.mining_pool_id == pool_id)
+            .order_by(MiningJobModel.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        ).scalars().all()
+
+    @staticmethod
+    def expire_active(now=None, commit=True):
+        now = now or datetime.now(UTC)
+        result = db.session.execute(
+            db.update(MiningJobModel)
+            .where(
+                MiningJobModel.status == "active",
+                MiningJobModel.expires_at <= now
+            )
+            .values(
+                status="expired",
+                completed_at=now
+            )
+        )
+
+        if commit:
+            db.session.commit()
+
+        return result
+
+    @staticmethod
     def mark_stale_for_blockchain(blockchain_id, current_tip_hash):
         """Expire active jobs that were built on an older chain tip."""
 

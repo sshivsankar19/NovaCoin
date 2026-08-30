@@ -6,6 +6,7 @@ from database.models.miner_model import MinerModel
 from database.repository.mining_pool_repository import MiningPoolRepository
 from database.repository.miner_repository import MinerRepository
 from miner.mining_pool_service import MiningPoolService
+from miner.worker_auth import WorkerAuth
 
 
 class PoolManager:
@@ -50,10 +51,13 @@ class PoolManager:
         if not pool.is_active:
             raise ValueError("Mining pool is not active.")
 
+        credential, credential_hash = WorkerAuth.create_credential()
+
         miner = MinerModel(
             mining_pool_id=pool_id,
             wallet_address=wallet_address,
             worker_name=worker_name,
+            api_key_hash=credential_hash,
             status="online",
             hash_rate=0,
             total_shares=0,
@@ -62,17 +66,25 @@ class PoolManager:
             last_seen=datetime.now(UTC)
         )
 
-        return MinerRepository.save(miner)
+        MinerRepository.save(miner)
+
+        return miner, credential
+
+    @staticmethod
+    def authenticate_worker(pool_id, miner_id, credential):
+        return WorkerAuth.authenticate(pool_id, miner_id, credential)
 
     @staticmethod
     def get_job(
         pool_id,
         blockchain,
-        miner_address
+        miner,
+        job_ttl_seconds=120
     ):
 
         return MiningPoolService.create_job(
             pool_id,
             blockchain,
-            miner_address
+            miner,
+            job_ttl_seconds=job_ttl_seconds
         )

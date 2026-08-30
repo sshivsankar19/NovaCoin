@@ -64,6 +64,19 @@ class BlockSubmissionService:
         if job.status != "active":
             return False, "Mining job is no longer active."
 
+        expires_at = job.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+
+        if expires_at <= datetime.now(UTC):
+            job.status = "expired"
+            job.completed_at = datetime.now(UTC)
+            db.session.commit()
+            return False, "Mining job has expired."
+
+        if job.miner_id != miner.id:
+            return False, "Miner does not own this mining job."
+
         block = BlockSubmissionService.apply_nonce(job, nonce)
 
         if not block.transactions:

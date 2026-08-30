@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime, timedelta, UTC
 
 from database.postgres import db
 from database.models.mining_job_model import MiningJobModel
@@ -12,16 +12,85 @@ from sqlalchemy.exc import IntegrityError
 from blockchain.block import Block
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
 from miner.block_submission_service import BlockSubmissionService
+from miner.worker_auth import WorkerAuth
 
 
 class MiningPoolService:
 
     @staticmethod
+    def _job_is_expired(job):
+        expires_at = job.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        return expires_at <= datetime.now(UTC)
+
+    @staticmethod
+    def authenticate_worker(pool_id, miner_id, credential):
+        return WorkerAuth.authenticate(pool_id, miner_id, credential)
+
+    @staticmethod
+    def heartbeat(
+        pool_id,
+        miner_id,
+        credential,
+        hashes_checked=None,
+        elapsed_seconds=None
+    ):
+        miner, error = WorkerAuth.authenticate(
+            pool_id,
+            miner_id,
+            credential
+        )
+
+        if error:
+            return None, error
+
+        if hashes_checked is not None and elapsed_seconds:
+            miner.hash_rate = hashes_checked / elapsed_seconds
+            db.session.commit()
+
+        return miner, None
+
+    @staticmethod
+    def submit_authenticated_share(
+        job_id,
+        miner_id,
+        credential,
+        nonce,
+        blockchain,
+        hashes_checked=None,
+        elapsed_seconds=None
+    ):
+        job = MiningJobRepository.get_by_id(job_id)
+
+        if job is None:
+            return False, "Mining job not found."
+
+        miner, error = WorkerAuth.authenticate(
+            job.mining_pool_id,
+            miner_id,
+            credential
+        )
+
+        if error:
+            return False, error
+
+        return MiningPoolService.submit_share(
+            job_id,
+            miner.id,
+            nonce,
+            blockchain,
+            hashes_checked=hashes_checked,
+            elapsed_seconds=elapsed_seconds
+        )
+
+    @staticmethod
     def create_job(
         pool_id,
         blockchain,
-        miner_address,
-        share_difficulty=None
+        miner,
+        share_difficulty=None,
+        job_ttl_seconds=120
     ):
 
         pool = MiningPoolRepository.get_by_id(pool_id)
@@ -35,9 +104,11 @@ class MiningPoolService:
         if pool.blockchain_id != blockchain.db_id:
             raise ValueError("Mining pool does not belong to this blockchain.")
 
-        miners = MinerRepository.get_by_wallet(miner_address)
-        if not any(miner.mining_pool_id == pool_id for miner in miners):
+        if miner.mining_pool_id != pool_id:
             raise ValueError("Miner does not belong to this mining pool.")
+
+        if job_ttl_seconds <= 0:
+            raise ValueError("Mining job TTL must be positive.")
 
         latest_block = blockchain.get_latest_block()
 
@@ -47,6 +118,7 @@ class MiningPoolService:
             blockchain.db_id,
             latest_block.hash
         )
+        MiningJobRepository.expire_active()
         db.session.commit()
 
         if share_difficulty is None:
@@ -62,7 +134,7 @@ class MiningPoolService:
 
         reward_tx = Transaction(
             SYSTEM_ADDRESS,
-            miner_address,
+            miner.wallet_address,
             blockchain.mining_reward
         )
 
@@ -94,6 +166,7 @@ class MiningPoolService:
 
         job = MiningJobModel(
             mining_pool_id=pool_id,
+            miner_id=miner.id,
             block_height=block.index,
             previous_hash=block.previous_hash,
             target="0" * blockchain.difficulty,
@@ -101,7 +174,10 @@ class MiningPoolService:
             share_difficulty=share_difficulty,
             share_target="0" * share_difficulty,
             block_data=block_template,
-            status="active"
+            status="active",
+            expires_at=datetime.now(UTC) + timedelta(
+                seconds=job_ttl_seconds
+            )
         )
 
         MiningJobRepository.save(job)
@@ -113,7 +189,9 @@ class MiningPoolService:
         job_id,
         miner_id,
         nonce,
-        blockchain
+        blockchain,
+        hashes_checked=None,
+        elapsed_seconds=None
     ):
 
         job = MiningJobRepository.get_by_id(
@@ -125,6 +203,12 @@ class MiningPoolService:
 
         if job.status != "active":
             return False, "Mining job is no longer active."
+
+        if MiningPoolService._job_is_expired(job):
+            job.status = "expired"
+            job.completed_at = datetime.now(UTC)
+            db.session.commit()
+            return False, "Mining job has expired."
 
         pool = MiningPoolRepository.get_by_id(job.mining_pool_id)
 
@@ -143,6 +227,9 @@ class MiningPoolService:
 
         if miner.mining_pool_id != job.mining_pool_id:
             return False, "Miner does not belong to this mining pool."
+
+        if job.miner_id != miner.id:
+            return False, "Miner does not own this mining job."
 
         if (
             job.previous_hash != blockchain.get_latest_block().hash
@@ -163,6 +250,9 @@ class MiningPoolService:
 
         miner.total_shares += 1
         miner.last_seen = datetime.now(UTC)
+
+        if hashes_checked is not None and elapsed_seconds:
+            miner.hash_rate = hashes_checked / elapsed_seconds
 
         is_network_solution = block.hash.startswith(
             job.target

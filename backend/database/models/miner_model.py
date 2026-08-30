@@ -7,6 +7,15 @@ class MinerModel(db.Model):
 
     __tablename__ = "miners"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "mining_pool_id",
+            "wallet_address",
+            "worker_name",
+            name="uq_miner_pool_wallet_worker"
+        ),
+    )
+
     id = db.Column(
         db.Integer,
         primary_key=True
@@ -26,6 +35,12 @@ class MinerModel(db.Model):
     worker_name = db.Column(
         db.String(100),
         nullable=False
+    )
+
+    api_key_hash = db.Column(
+        db.String(64),
+        nullable=False,
+        unique=True
     )
 
     status = db.Column(

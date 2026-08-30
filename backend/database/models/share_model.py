@@ -14,6 +14,8 @@ class ShareModel(db.Model):
             "nonce",
             name="uq_mining_share_job_miner_nonce"
         ),
+        db.Index("ix_mining_share_job_submitted", "mining_job_id", "submitted_at"),
+        db.Index("ix_mining_share_miner_submitted", "miner_id", "submitted_at"),
     )
 
     id = db.Column(
