@@ -7,12 +7,114 @@
     <link rel="stylesheet" href="style.css"><title>Mining | Cryptocurrency Mining &amp; Management System</title>
   </head>
   <body data-page="mining">
-    <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">BC</span><span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Dashboard">
+        <span class="brand-mark" aria-hidden="true">BC</span>
+        <span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span>
+      </a>
+      <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button>
+      <nav id="main-navigation" aria-label="Main navigation">
+        <a data-page-link="dashboard" href="index.html">Dashboard</a>
+        <a data-page-link="blockchain" href="blockchain.html">Blockchain</a>
+        <a data-page-link="mining" href="mining.html">Mining</a>
+        <a data-page-link="pools" href="pools.html">Pools</a>
+        <a data-page-link="transactions" href="transactions.html">Transactions</a>
+        <a data-page-link="wallet" href="wallet.html">Wallet</a>
+        <a data-page-link="sandbox" href="sandbox.html">Sandbox</a>
+      </nav>
+      <div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div>
+    </header>
     <main>
-      <section class="page-intro"><p class="eyebrow">PROOF OF WORK</p><h1>Mining</h1><p class="muted">The project mining path from transaction data to a validated block.</p><span class="last-updated" id="last-updated">Not updated</span></section>
+      <section class="page-intro">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PROOF OF WORK</p>
+            <h1>Mining</h1>
+            <p class="muted">The project mining path from transaction data to a validated block.</p>
+          </div>
+          <div class="page-actions">
+            <button class="secondary-button" id="refresh-mining" type="button">Refresh mining data</button>
+            <span class="last-updated" id="last-updated">Not updated</span>
+          </div>
+        </div>
+      </section>
       <div id="notice" class="notice" role="alert" hidden></div>
-      <section class="section"><div class="section-heading"><div><p class="eyebrow">PROTOCOL PARAMETERS</p><h2>Current chain configuration</h2></div><span class="section-index">03</span></div><div class="mining-grid"><article class="panel"><h3 id="mining-protocol-title">Loading protocol…</h3><dl id="mining-protocol" class="details"></dl></article><article class="panel"><p class="eyebrow">ACTUAL PROJECT FLOW</p><h3>Nonce search and validation</h3><div class="mining-flow" aria-label="Mining flow"><span>Block data</span><b aria-hidden="true">↓</b><span>Nonce</span><b aria-hidden="true">↓</b><span>SHA-256</span><b aria-hidden="true">↓</b><span>Hash</span><b aria-hidden="true">↓</b><span>Difficulty validation</span><b aria-hidden="true">↓</b><span>Valid block</span></div><p class="muted">The worker uses the existing <code>Block.calculate_hash()</code> implementation. Worker execution is currently CLI-based; browser mining control is not exposed by the current API.</p></article></div></section>
-      <section class="section"><div class="section-heading"><div><p class="eyebrow">WORKER OPERATIONS</p><h2>Authenticated mining worker</h2></div></div><article class="panel"><p>The worker requests a pool job, reconstructs its block template, searches a controlled nonce range, submits share-target solutions and reports observed activity through heartbeats.</p><p class="muted">Run the existing CLI worker with its configured pool ID, miner ID, wallet address and worker API key. Credentials are not displayed or stored in this browser interface.</p></article></section>
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">PROTOCOL PARAMETERS</p><h2>Current chain configuration</h2></div>
+          <span class="section-index">01</span>
+        </div>
+        <div class="mining-grid">
+          <article class="panel">
+            <h3 id="mining-protocol-title">Loading protocol…</h3>
+            <dl id="mining-protocol" class="details"></dl>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">ACTUAL PROJECT FLOW</p>
+            <h3>Nonce search and validation</h3>
+            <div class="mining-flow" aria-label="Mining flow">
+              <span>Block data</span><b aria-hidden="true">↓</b><span>Nonce</span><b aria-hidden="true">↓</b><span>SHA-256</span><b aria-hidden="true">↓</b><span>Hash</span><b aria-hidden="true">↓</b><span>Difficulty validation</span><b aria-hidden="true">↓</b><span>Valid block</span>
+            </div>
+            <p class="muted">The existing Proof-of-Work loop changes the nonce, calls <code>Block.calculate_hash()</code>, and accepts a hash beginning with the required number of zeroes.</p>
+          </article>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">LATEST CHAIN STATE</p><h2>Proof-of-Work block data</h2></div>
+          <span class="section-index">02</span>
+        </div>
+        <article class="panel">
+          <div id="mining-block-state" class="panel-content empty">Loading latest block…</div>
+          <p class="muted mining-note">The displayed block is the latest block returned by <code>/chain</code>. The API does not expose an in-progress browser mining session.</p>
+        </article>
+      </section>
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">WORKER OPERATIONS</p><h2>Authenticated mining worker</h2></div>
+          <span class="section-index">03</span>
+        </div>
+        <div class="mining-grid">
+          <article class="panel">
+            <p>The existing worker requests an authenticated pool job, reconstructs its exact block template, searches a configured nonce range, submits share-target solutions, detects network-valid solutions, and sends heartbeats.</p>
+            <p class="muted">Worker execution is CLI-based. Browser start/stop controls are not exposed by the current API, so this page does not fabricate them.</p>
+            <pre class="command-block">cd backend
+python -m miner.worker --api-base-url http://127.0.0.1:5000 \
+  --pool-id &lt;pool-id&gt; --miner-id &lt;miner-id&gt; \
+  --miner-address &lt;wallet-address&gt; --api-key &lt;worker-api-key&gt;</pre>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">PERSISTED STATUS</p>
+            <h3>Workers</h3>
+            <div id="mining-worker-status" class="panel-content empty">Worker status is pool-scoped and not loaded without a pool context.</div>
+          </article>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">POOL-SCOPED RECORDS</p><h2>Jobs, shares and payouts</h2></div>
+          <span class="section-index">04</span>
+        </div>
+        <article class="panel">
+          <div id="mining-pool-context" class="panel-content empty">No pool context supplied. Open the Pools page to select a pool, then load Mining with <code>?pool_id=&lt;id&gt;</code> to inspect its records.</div>
+        </article>
+        <div class="table-heading"><div><p class="eyebrow">JOB HISTORY</p><h3>Mining jobs</h3></div></div>
+        <div id="mining-jobs-table"><p class="empty">Pool-scoped jobs are not loaded.</p></div>
+        <div class="table-heading"><div><p class="eyebrow">SHARE HISTORY</p><h3>Submitted shares</h3></div></div>
+        <div id="mining-shares-table"><p class="empty">Pool-scoped shares are not loaded.</p></div>
+        <div class="table-heading"><div><p class="eyebrow">REWARD ACCOUNTING</p><h3>Payouts</h3></div></div>
+        <div id="mining-payouts-table"><p class="empty">Pool-scoped payouts are not loaded.</p></div>
+      </section>
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">IMPLEMENTATION CONTEXT</p><h2>From transaction to reward</h2></div>
+          <span class="section-index">05</span>
+        </div>
+        <article class="panel">
+          <p class="mining-explanation"><strong>Transaction</strong> enters the mempool → <strong>block data</strong> combines the reward transaction with pending transactions → the worker varies the <strong>nonce</strong> → <strong>SHA-256</strong> produces a candidate hash → the hash must satisfy the configured <strong>difficulty prefix</strong> → a valid block or pool share is submitted → a network-valid pool result records the <strong>block and payout</strong>.</p>
+          <p class="muted">This describes the implementation currently present in <code>backend/blockchain</code> and <code>backend/miner</code>; it is not a browser simulation or a claim of live hardware mining.</p>
+        </article>
+      </section>
     </main>
     <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
   </body>
