@@ -31,7 +31,7 @@ class WorkerAuth:
         )
 
     @staticmethod
-    def authenticate(pool_id, miner_id, credential):
+    def authenticate(pool_id, miner_id, credential, commit=True):
         miner = MinerRepository.get_by_id(miner_id)
 
         if miner is None:
@@ -44,5 +44,7 @@ class WorkerAuth:
             return None, "Invalid worker API credential."
 
         miner.last_seen = datetime.now(UTC)
-        db.session.commit()
+        miner.status = "online"
+        if commit:
+            db.session.commit()
         return miner, None

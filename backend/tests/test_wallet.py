@@ -1,10 +1,9 @@
 from blockchain.wallet import Wallet
 
-wallet = Wallet()
 
-print("Address:")
-print(wallet.address)
+def test_wallet_generates_an_address_and_repr():
+    wallet = Wallet()
 
-print()
-
-print(wallet)
+    assert len(wallet.address) == 64
+    assert wallet.address == wallet.address.lower()
+    assert repr(wallet).startswith("Wallet(")

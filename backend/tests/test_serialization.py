@@ -1,34 +1,14 @@
-from blockchain.wallet import Wallet
 from blockchain.transaction import Transaction
+from blockchain.wallet import Wallet
 
-wallet1 = Wallet()
-wallet2 = Wallet()
 
-tx = Transaction(
-    wallet1.address,
-    wallet2.address,
-    25
-)
+def test_signed_transaction_round_trip_preserves_verification():
+    wallet1 = Wallet()
+    wallet2 = Wallet()
+    transaction = Transaction(wallet1.address, wallet2.address, 25)
+    transaction.sign(wallet1)
 
-tx.sign(wallet1)
+    restored = Transaction.from_dict(transaction.to_dict())
 
-print("Original")
-
-print(tx.to_dict())
-
-print()
-
-copy = Transaction.from_dict(
-    tx.to_dict()
-)
-
-print("Restored")
-
-print(copy.to_dict())
-
-print()
-
-print(
-    "Verified:",
-    copy.verify()
-)
+    assert restored.to_dict() == transaction.to_dict()
+    assert restored.verify() is True

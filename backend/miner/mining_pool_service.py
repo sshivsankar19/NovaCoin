@@ -7,12 +7,14 @@ from database.repository.mining_job_repository import MiningJobRepository
 from database.repository.share_repository import ShareRepository
 from database.repository.miner_repository import MinerRepository
 from database.repository.mining_pool_repository import MiningPoolRepository
+from database.repository.block_repository import BlockRepository
 from sqlalchemy.exc import IntegrityError
 
 from blockchain.block import Block
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
 from miner.block_submission_service import BlockSubmissionService
 from miner.worker_auth import WorkerAuth
+from miner.pool_analytics_service import PoolAnalyticsService
 
 
 class MiningPoolService:
@@ -23,6 +25,19 @@ class MiningPoolService:
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=UTC)
         return expires_at <= datetime.now(UTC)
+
+    @staticmethod
+    def _job_matches_persisted_tip(job, blockchain):
+        """Reject work against a tip another process has already committed."""
+        if blockchain.db_id is None:
+            return True
+        persisted_tip = BlockRepository.get_latest(blockchain.db_id)
+        if persisted_tip is None:
+            return True
+        return (
+            job.previous_hash == persisted_tip.hash
+            and job.block_height == persisted_tip.height + 1
+        )
 
     @staticmethod
     def authenticate_worker(pool_id, miner_id, credential):
@@ -52,6 +67,18 @@ class MiningPoolService:
         return miner, None
 
     @staticmethod
+    def shutdown(pool_id, miner_id, credential):
+        miner, error = WorkerAuth.authenticate(
+            pool_id, miner_id, credential
+        )
+        if error:
+            return None, error
+        miner.status = "offline"
+        miner.hash_rate = 0
+        db.session.commit()
+        return miner, None
+
+    @staticmethod
     def submit_authenticated_share(
         job_id,
         miner_id,
@@ -61,15 +88,16 @@ class MiningPoolService:
         hashes_checked=None,
         elapsed_seconds=None
     ):
-        job = MiningJobRepository.get_by_id(job_id)
+        # Lock the job for the complete validation/accounting transaction.
+        # PostgreSQL serializes two workers racing to submit the same nonce;
+        # SQLite simply ignores the lock clause for isolated test databases.
+        job = MiningJobRepository.get_for_update(job_id)
 
         if job is None:
             return False, "Mining job not found."
 
         miner, error = WorkerAuth.authenticate(
-            job.mining_pool_id,
-            miner_id,
-            credential
+            job.mining_pool_id, miner_id, credential, commit=False
         )
 
         if error:
@@ -143,7 +171,9 @@ class MiningPoolService:
         ]
 
         transactions.extend(
-            blockchain.get_pending_transactions()
+            transaction
+            for transaction in blockchain.get_pending_transactions()
+            if transaction.sender != SYSTEM_ADDRESS
         )
 
         block = Block(
@@ -194,7 +224,7 @@ class MiningPoolService:
         elapsed_seconds=None
     ):
 
-        job = MiningJobRepository.get_by_id(
+        job = MiningJobRepository.get_for_update(
             job_id
         )
 
@@ -218,7 +248,7 @@ class MiningPoolService:
         if pool.blockchain_id != blockchain.db_id:
             return False, "Mining job does not belong to this blockchain."
 
-        miner = MinerRepository.get_by_id(
+        miner = MinerRepository.get_for_update(
             miner_id
         )
 
@@ -232,7 +262,8 @@ class MiningPoolService:
             return False, "Miner does not own this mining job."
 
         if (
-            job.previous_hash != blockchain.get_latest_block().hash
+            not MiningPoolService._job_matches_persisted_tip(job, blockchain)
+            or job.previous_hash != blockchain.get_latest_block().hash
             or job.block_height != len(blockchain.chain)
         ):
             job.status = "stale"
@@ -248,12 +279,6 @@ class MiningPoolService:
             nonce
         )
 
-        miner.total_shares += 1
-        miner.last_seen = datetime.now(UTC)
-
-        if hashes_checked is not None and elapsed_seconds:
-            miner.hash_rate = hashes_checked / elapsed_seconds
-
         is_network_solution = block.hash.startswith(
             job.target
         )
@@ -264,7 +289,12 @@ class MiningPoolService:
 
         if not is_valid_share:
 
+            miner.total_shares += 1
             miner.rejected_shares += 1
+            miner.last_seen = datetime.now(UTC)
+            miner.status = "online"
+            if hashes_checked is not None and elapsed_seconds:
+                miner.hash_rate = hashes_checked / elapsed_seconds
 
             share = ShareModel(
                 mining_job_id=job.id,
@@ -275,16 +305,23 @@ class MiningPoolService:
                 status="rejected"
             )
 
-            ShareRepository.save(
-                share,
-                commit=False
-            )
-
-            db.session.commit()
+            ShareRepository.save(share, commit=False)
+            try:
+                db.session.flush()
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                return False, "Duplicate share submission."
+            PoolAnalyticsService.record(job.mining_pool_id)
 
             return False, "Share rejected."
 
+        miner.total_shares += 1
         miner.accepted_shares += 1
+        miner.last_seen = datetime.now(UTC)
+        miner.status = "online"
+        if hashes_checked is not None and elapsed_seconds:
+            miner.hash_rate = hashes_checked / elapsed_seconds
 
         status = (
             "block_candidate"
@@ -327,6 +364,7 @@ class MiningPoolService:
                 db.session.rollback()
                 return False, result
 
+            PoolAnalyticsService.record(job.mining_pool_id)
             return True, {
                 "message": "Block successfully submitted.",
                 "hash": block.hash,
@@ -341,6 +379,7 @@ class MiningPoolService:
             db.session.rollback()
             return False, "Unable to save share."
 
+        PoolAnalyticsService.record(job.mining_pool_id)
         return True, {
             "message": "Share accepted.",
             "hash": block.hash,

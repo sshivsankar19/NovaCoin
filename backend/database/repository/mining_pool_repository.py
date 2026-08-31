@@ -31,6 +31,14 @@ class MiningPoolRepository:
         ).scalar_one_or_none()
 
     @staticmethod
+    def get_for_update(pool_id):
+        return db.session.execute(
+            db.select(MiningPoolModel)
+            .where(MiningPoolModel.id == pool_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+
+    @staticmethod
     def get_active():
 
         return db.session.execute(

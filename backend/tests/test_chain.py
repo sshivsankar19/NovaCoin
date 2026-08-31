@@ -1,35 +1,13 @@
 from blockchain.block import Block
 from blockchain.blockchain import Blockchain
 
-chain = Blockchain()
-print("Mining Block 1...")
-chain.add_block(
-    Block(
-        index=1,
-        transactions=[],
-        previous_hash=""
-    )
-)
-print("Block 1 mined!")
-print(chain.chain[1].hash)
-chain.add_block(
-    Block(
-        index=2,
-        transactions=[],
-        previous_hash=""
-    )
-)
-#chain.chain[1].reward = 100000         for checking attacks and stuff
-for block in chain.chain:
 
-    print("------------------------")
+def test_add_block_links_and_mines_blocks():
+    chain = Blockchain(difficulty=1)
+    chain.add_block(Block(index=1, transactions=[], previous_hash=""))
+    chain.add_block(Block(index=2, transactions=[], previous_hash=""))
 
-    print("Index :", block.index)
-
-    print("Hash :", block.hash)
-
-    print("Previous :", block.previous_hash)
-
-print("------------------------")
-
-print("Blockchain Valid :", chain.is_chain_valid())
+    assert len(chain.chain) == 3
+    assert chain.chain[1].previous_hash == chain.chain[0].hash
+    assert chain.chain[2].previous_hash == chain.chain[1].hash
+    assert chain.is_chain_valid() is True

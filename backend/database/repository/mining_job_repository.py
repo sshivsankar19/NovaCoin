@@ -25,6 +25,15 @@ class MiningJobRepository:
         )
 
     @staticmethod
+    def get_for_update(job_id):
+        """Load a job while serializing concurrent share submissions."""
+        return db.session.execute(
+            db.select(MiningJobModel)
+            .where(MiningJobModel.id == job_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+
+    @staticmethod
     def get_active(pool_id):
 
         return db.session.execute(
@@ -50,14 +59,56 @@ class MiningJobRepository:
         ).scalars().all()
 
     @staticmethod
-    def expire_active(now=None, commit=True):
+    def get_by_pool_page(pool_id, page=1, page_size=25):
+        condition = MiningJobModel.mining_pool_id == pool_id
+        total = db.session.execute(
+            db.select(db.func.count(MiningJobModel.id)).where(condition)
+        ).scalar_one()
+        items = db.session.execute(
+            db.select(MiningJobModel)
+            .where(condition)
+            .order_by(
+                MiningJobModel.created_at.desc(), MiningJobModel.id.desc()
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).scalars().all()
+        return items, total
+
+    @staticmethod
+    def get_status_counts(pool_id):
+        rows = db.session.execute(
+            db.select(
+                MiningJobModel.status,
+                db.func.count(MiningJobModel.id)
+            )
+            .where(MiningJobModel.mining_pool_id == pool_id)
+            .group_by(MiningJobModel.status)
+        ).all()
+        counts = {
+            "active": 0,
+            "completed": 0,
+            "stale": 0,
+            "expired": 0,
+        }
+        counts.update({
+            str(status): count for status, count in rows
+            if status in counts
+        })
+        return counts
+
+    @staticmethod
+    def expire_active(now=None, commit=True, pool_id=None):
         now = now or datetime.now(UTC)
+        conditions = [
+            MiningJobModel.status == "active",
+            MiningJobModel.expires_at <= now,
+        ]
+        if pool_id is not None:
+            conditions.append(MiningJobModel.mining_pool_id == pool_id)
         result = db.session.execute(
             db.update(MiningJobModel)
-            .where(
-                MiningJobModel.status == "active",
-                MiningJobModel.expires_at <= now
-            )
+            .where(*conditions)
             .values(
                 status="expired",
                 completed_at=now

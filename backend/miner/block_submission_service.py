@@ -8,6 +8,7 @@ from database.postgres import db
 from database.repository.mining_pool_repository import MiningPoolRepository
 from database.repository.mining_job_repository import MiningJobRepository
 from database.repository.payout_repository import PayoutRepository
+from database.repository.block_repository import BlockRepository
 from sqlalchemy.exc import IntegrityError
 
 class BlockSubmissionService:
@@ -87,6 +88,12 @@ class BlockSubmissionService:
         if reward_transaction.sender != SYSTEM_ADDRESS:
             return False, "Mining job has an invalid reward transaction."
 
+        if any(
+            transaction.sender == SYSTEM_ADDRESS
+            for transaction in block.transactions[1:]
+        ):
+            return False, "Mining job contains an unauthorized system transaction."
+
         if reward_transaction.receiver != miner.wallet_address:
             return False, "Winning miner does not match the job reward recipient."
 
@@ -94,10 +101,22 @@ class BlockSubmissionService:
             return False, "Block does not satisfy network difficulty."
 
         latest_block = blockchain.get_latest_block()
+        persisted_latest = (
+            BlockRepository.get_latest(blockchain.db_id)
+            if blockchain.db_id is not None
+            else None
+        )
 
         if (
             block.previous_hash != latest_block.hash
             or block.index != len(blockchain.chain)
+            or (
+                persisted_latest is not None
+                and (
+                    block.previous_hash != persisted_latest.hash
+                    or block.index != persisted_latest.height + 1
+                )
+            )
         ):
             # A share may already be staged by submit_share.  It must not be
             # committed when the job has become stale between validation and
@@ -151,7 +170,19 @@ class BlockSubmissionService:
 
         except IntegrityError:
             db.session.rollback()
-            return False, "A payout has already been recorded for this block."
+            existing_block = BlockRepository.get_by_hash(block.hash)
+            if existing_block and PayoutRepository.get_by_block(
+                existing_block.id
+            ):
+                message = "A payout has already been recorded for this block."
+            else:
+                message = "Block has already been submitted."
+            current_job = MiningJobRepository.get_by_id(job.id)
+            if current_job and current_job.status == "active":
+                current_job.status = "stale"
+                current_job.completed_at = datetime.now(UTC)
+                db.session.commit()
+            return False, message
 
         except Exception:
             db.session.rollback()

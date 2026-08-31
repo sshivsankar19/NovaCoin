@@ -1,21 +1,17 @@
-from blockchain.blockchain import Blockchain
-from blockchain.wallet import Wallet
 from blockchain.transaction import Transaction
 
-chain = Blockchain()
+from blockchain.blockchain import Blockchain
+from blockchain.wallet import Wallet
 
-alice = Wallet()
-bob = Wallet()
-miner = Wallet()
 
-print("Alice balance:", chain.get_balance(alice.address))
+def test_new_wallet_has_zero_balance_and_signed_transaction_is_pending():
+    chain = Blockchain(difficulty=1)
+    alice = Wallet()
+    bob = Wallet()
 
-tx = Transaction(
-    alice.address,
-    bob.address,
-    25
-)
+    assert chain.get_balance(alice.address) == 0
+    transaction = Transaction(alice.address, bob.address, 25)
+    transaction.sign(alice)
 
-tx.sign(alice)
-
-print("Transaction accepted:", chain.add_transaction(tx))
+    assert chain.add_transaction(transaction) is True
+    assert chain.get_pending_transactions() == [transaction]

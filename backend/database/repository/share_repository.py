@@ -36,6 +36,23 @@ class ShareRepository:
         ).scalars().all()
 
     @staticmethod
+    def get_by_miner_page(miner_id, page=1, page_size=25):
+        condition = ShareModel.miner_id == miner_id
+        total = db.session.execute(
+            db.select(db.func.count(ShareModel.id)).where(condition)
+        ).scalar_one()
+        items = db.session.execute(
+            db.select(ShareModel)
+            .where(condition)
+            .order_by(
+                ShareModel.submitted_at.desc(), ShareModel.id.desc()
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).scalars().all()
+        return items, total
+
+    @staticmethod
     def get_by_job(job_id):
 
         return db.session.execute(
@@ -76,3 +93,25 @@ class ShareRepository:
                 ShareModel.nonce == nonce
             )
         ).scalar_one_or_none()
+
+    @staticmethod
+    def get_by_pool_page(pool_id, page=1, page_size=25):
+        from database.models.mining_job_model import MiningJobModel
+        condition = ShareModel.mining_job_id.in_(
+            db.select(MiningJobModel.id).where(
+                MiningJobModel.mining_pool_id == pool_id
+            )
+        )
+        total = db.session.execute(
+            db.select(db.func.count(ShareModel.id)).where(condition)
+        ).scalar_one()
+        items = db.session.execute(
+            db.select(ShareModel)
+            .where(condition)
+            .order_by(
+                ShareModel.submitted_at.desc(), ShareModel.id.desc()
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).scalars().all()
+        return items, total

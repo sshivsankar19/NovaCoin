@@ -7,17 +7,6 @@ class ShareModel(db.Model):
 
     __tablename__ = "mining_shares"
 
-    __table_args__ = (
-        db.UniqueConstraint(
-            "mining_job_id",
-            "miner_id",
-            "nonce",
-            name="uq_mining_share_job_miner_nonce"
-        ),
-        db.Index("ix_mining_share_job_submitted", "mining_job_id", "submitted_at"),
-        db.Index("ix_mining_share_miner_submitted", "miner_id", "submitted_at"),
-    )
-
     id = db.Column(
         db.Integer,
         primary_key=True
@@ -26,13 +15,15 @@ class ShareModel(db.Model):
     mining_job_id = db.Column(
         db.Integer,
         db.ForeignKey("mining_jobs.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     miner_id = db.Column(
         db.Integer,
         db.ForeignKey("miners.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     nonce = db.Column(
@@ -60,4 +51,23 @@ class ShareModel(db.Model):
         db.DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(UTC)
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "mining_job_id",
+            "miner_id",
+            "nonce",
+            name="uq_mining_share_job_miner_nonce"
+        ),
+        db.Index(
+            "ix_mining_shares_miner_submitted",
+            "miner_id",
+            "submitted_at"
+        ),
+        db.Index(
+            "ix_mining_shares_job_submitted",
+            "mining_job_id",
+            "submitted_at"
+        ),
     )

@@ -1,5 +1,6 @@
 from database.postgres import db
 from database.models.block_model import BlockModel
+from database.models.payout_model import PayoutModel
 from database.mapper.block_mapper import BlockMapper
 
 
@@ -62,3 +63,16 @@ class BlockRepository:
                 BlockModel.height.desc()
             )
         ).scalars().first()
+
+    @staticmethod
+    def get_recent_pool_blocks(pool_id, blockchain_id, limit=25):
+        return db.session.execute(
+            db.select(BlockModel)
+            .join(PayoutModel, PayoutModel.block_id == BlockModel.id)
+            .where(
+                PayoutModel.mining_pool_id == pool_id,
+                BlockModel.blockchain_id == blockchain_id,
+            )
+            .order_by(BlockModel.height.desc(), BlockModel.id.desc())
+            .limit(limit)
+        ).scalars().all()

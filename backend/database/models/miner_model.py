@@ -24,7 +24,8 @@ class MinerModel(db.Model):
     mining_pool_id = db.Column(
         db.Integer,
         db.ForeignKey("mining_pools.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     wallet_address = db.Column(

@@ -1,37 +1,21 @@
-from blockchain.wallet import Wallet
 from blockchain.transaction import Transaction
+from blockchain.wallet import Wallet
 from blockchain.blockchain import Blockchain
 
-chain = Blockchain()
 
-alice = Wallet()
-bob = Wallet()
+def test_balances_include_rewards_and_confirmed_transfers():
+    chain = Blockchain(difficulty=1)
+    alice = Wallet()
+    bob = Wallet()
 
-# Alice mines her first block
-chain.mine_pending_transactions(alice.address)
+    chain.mine_pending_transactions(alice.address)
+    assert chain.get_balance(alice.address) == 10
+    assert chain.get_balance(bob.address) == 0
 
-print("After first mining:")
-print("Alice:", chain.get_balance(alice.address))
-print("Bob:", chain.get_balance(bob.address))
+    transaction = Transaction(alice.address, bob.address, 5)
+    transaction.sign(alice)
+    assert chain.add_transaction(transaction) is True
 
-print()
-
-tx = Transaction(
-    alice.address,
-    bob.address,
-    5
-)
-
-tx.sign(alice)
-
-accepted = chain.add_transaction(tx)
-
-print("Transaction accepted:", accepted)
-
-chain.mine_pending_transactions(alice.address)
-
-print()
-
-print("Final balances:")
-print("Alice:", chain.get_balance(alice.address))
-print("Bob:", chain.get_balance(bob.address))
+    chain.mine_pending_transactions(alice.address)
+    assert chain.get_balance(alice.address) == 15
+    assert chain.get_balance(bob.address) == 5

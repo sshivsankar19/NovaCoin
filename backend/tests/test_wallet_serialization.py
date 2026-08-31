@@ -1,14 +1,10 @@
 from blockchain.wallet import Wallet
 
-wallet = Wallet()
 
-data = wallet.to_dict()
+def test_wallet_round_trip_preserves_keys_and_address():
+    wallet = Wallet()
+    restored = Wallet.from_dict(wallet.to_dict())
 
-copy = Wallet.from_dict(data)
-
-print(wallet.address)
-print(copy.address)
-
-print()
-
-print(wallet.address == copy.address)
+    assert restored.address == wallet.address
+    signature = restored.sign("round trip")
+    assert restored.verify("round trip", signature) is True

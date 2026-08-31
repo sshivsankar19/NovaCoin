@@ -4,7 +4,6 @@ from database.postgres import db
 class BlockModel(db.Model):
 
     __tablename__ = "blocks"
-
     __table_args__ = (
         db.UniqueConstraint(
             "blockchain_id",
@@ -21,12 +20,14 @@ class BlockModel(db.Model):
     blockchain_id = db.Column(
         db.Integer,
         db.ForeignKey("blockchains.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     height = db.Column(
         db.Integer,
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     hash = db.Column(

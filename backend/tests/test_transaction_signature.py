@@ -1,33 +1,17 @@
-from blockchain.wallet import Wallet
+import pytest
+
 from blockchain.transaction import Transaction
+from blockchain.wallet import Wallet
 
-wallet1 = Wallet()
-wallet2 = Wallet()
 
-tx = Transaction(
-    wallet1.address,
-    wallet2.address,
-    25
-)
+def test_signed_transaction_verifies_and_cannot_be_changed_or_resigned():
+    wallet1 = Wallet()
+    wallet2 = Wallet()
+    transaction = Transaction(wallet1.address, wallet2.address, 25)
+    transaction.sign(wallet1)
 
-tx.sign(wallet1)
-
-print("Transaction:")
-print(tx)
-
-print()
-
-print("Verified:", tx.verify())
-print("\nTrying to modify a signed transaction...")
-
-try:
-    tx.amount = 500
-except RuntimeError as e:
-    print(e)
-
-print("\nTrying to sign again...")
-
-try:
-    tx.sign(wallet1)
-except RuntimeError as e:
-    print(e)
+    assert transaction.verify() is True
+    with pytest.raises(RuntimeError):
+        transaction.amount = 500
+    with pytest.raises(RuntimeError):
+        transaction.sign(wallet1)

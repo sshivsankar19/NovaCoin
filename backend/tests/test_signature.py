@@ -1,23 +1,12 @@
 from blockchain.wallet import Wallet
 
-wallet = Wallet()
 
-#message = "Send 25 coins to Bob"
-message = "Send 25000 coins to Bob"
+def test_wallet_signature_verifies_only_for_original_message():
+    wallet = Wallet()
+    message = "Send 25000 coins to Bob"
 
-signature = wallet.sign(message)
+    signature = wallet.sign(message)
 
-print("Message:")
-print(message)
-
-print()
-
-print("Signature:")
-print(signature.hex())
-
-print()
-
-print(
-    "Verified:",
-    wallet.verify(message, signature)
-)
+    assert len(signature) > 0
+    assert wallet.verify(message, signature) is True
+    assert wallet.verify("tampered", signature) is False

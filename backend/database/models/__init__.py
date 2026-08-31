@@ -7,3 +7,4 @@ from .miner_model import MinerModel
 from .mining_job_model import MiningJobModel
 from .share_model import ShareModel
 from .payout_model import PayoutModel
+from .pool_analytics_model import PoolAnalyticsModel

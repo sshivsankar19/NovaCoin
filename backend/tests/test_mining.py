@@ -1,17 +1,12 @@
 from blockchain.blockchain import Blockchain
-from blockchain.wallet import Wallet
-from blockchain.transaction import Transaction
 
-chain = Blockchain()
 
-miner = Wallet()
+def test_mining_pays_the_configured_reward():
+    chain = Blockchain(difficulty=1)
+    miner = "miner-address"
 
-print("Before mining:")
-print(chain.get_balance(miner.address))
+    assert chain.get_balance(miner) == 0
+    chain.mine_pending_transactions(miner)
 
-chain.mine_pending_transactions(miner.address)
-
-print()
-
-print("After mining:")
-print(chain.get_balance(miner.address))
+    assert len(chain.chain) == 2
+    assert chain.get_balance(miner) == chain.mining_reward
