@@ -1,11 +1,10 @@
 from blockchain.transaction import Transaction
 
-t = Transaction(
-    "Alice",
-    "Bob",
-    25
-)
 
-print(t)
+def test_transaction_has_id_and_readable_representation():
+    transaction = Transaction("Alice", "Bob", 25)
 
-print(t.txid)
+    assert len(transaction.txid) == 64
+    assert transaction.sender == "Alice"
+    assert transaction.receiver == "Bob"
+    assert "Alice" in repr(transaction)

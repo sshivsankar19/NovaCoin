@@ -76,6 +76,10 @@ Private keys are not stored in PostgreSQL.
 - Network difficulty and pool difficulty separation
 - Accepted/rejected share tracking
 - Block-candidate detection foundation
+- Persisted pool analytics snapshots and share acceptance statistics
+- Paginated job, share, payout, and analytics history
+- Authenticated miner worker with retries, heartbeats, and graceful shutdown
+- Bounded operational monitoring endpoint
 
 The mining pool is currently under active development.
 
@@ -110,7 +114,25 @@ Current API functionality includes:
 - Transaction lookup
 - Block mining
 
-Mining pool API endpoints will be added after the pool service is finalized.
+Mining pool endpoints include:
+
+- `POST /pool` and `POST /pool/<id>/miners` (registration returns a
+  one-time bearer token)
+- `GET /pool/<id>/job` and `POST /pool/share`
+- `GET /pool/<id>/payouts`, `/miners/<id>/payouts`, `/shares`, and `/jobs`
+  (all accept `page` and bounded `page_size`)
+- `GET /pool/<id>/analytics` for persisted snapshots and statistical
+  acceptance-rate/hash-rate summaries
+- `GET /pool/<id>/monitoring?limit=25` (the limit is capped server-side)
+- `POST /pool/<id>/miners/<miner_id>/heartbeat` and `/shutdown`
+
+Workers send `Authorization: Bearer <token>`. Configure worker operation with
+`MINER_POLL_INTERVAL`, `MINER_HEARTBEAT_INTERVAL`, `MINER_REQUEST_TIMEOUT`,
+`MINER_MAX_RETRIES`, `MINER_RETRY_BACKOFF`, and `MINER_MAX_NONCE`.
+`MINER_START_NONCE` can partition nonce work across workers.
+An operational worker can be started with `python -m miner.worker` after
+setting `MINER_POOL_URL`, `MINER_POOL_ID`, and `MINER_WALLET_ADDRESS`
+(optionally `MINER_WORKER_NAME` and `MINER_AUTH_TOKEN`).
 
 ## Architecture
 
@@ -143,8 +165,8 @@ Mining pool API endpoints will be added after the pool service is finalized.
                      Mining Pool
                           |
               +-----------+-----------+
-              |           |           |
-            Miners      Jobs        Shares
+              |           |           |          |
+            Miners      Jobs        Shares    Analytics
               |           |           |
               +-----------+-----------+
                           |
@@ -168,6 +190,9 @@ backend/
 ├── database/
 │   ├── __init__.py
 │   ├── blockchain_loader.py
+│   ├── migrations/
+│   │   ├── 0001_mining_pool.sql
+│   │   └── runner.py
 │   ├── postgres.py
 │   │
 │   ├── models/
@@ -192,6 +217,8 @@ backend/
 │       └── wallet_repository.py
 |
 ├── miner/
+│   ├── worker.py
+│   └── pool_analytics_service.py
 ├── routes/
 ├── utils/
 ├── tests/
@@ -252,9 +279,14 @@ The project is under active development.
 
 The blockchain core, Proof-of-Work mining, wallet system, signed transactions, transaction validation, mempool, REST API, PostgreSQL persistence, persistent mining, blockchain recovery, and mining pool database foundation are implemented.
 
-The mining pool service is currently being developed, including job distribution, share validation, pool difficulty, and reward accounting.
+The mining pool service includes job distribution, share validation, pool difficulty, reward accounting, worker heartbeats, and bounded monitoring.
 
-External cryptocurrency integration, frontend, Web3 integration, and cloud deployment are planned for subsequent development stages.
+The dependency-free frontend is implemented as separate technical pages for the
+dashboard, blockchain explorer, mining flow, pool operations, transactions,
+wallet lookup, and educational sandbox. It uses the read-only APIs described
+below and labels unsupported browser operations instead of fabricating controls.
+External cryptocurrency integration, Web3 integration, and cloud deployment
+remain future work.
 
 ## Mining Pool Operations
 
@@ -315,3 +347,54 @@ Useful controls include `--nonce-start`, `--max-nonce`, `--max-shares`, `--reque
 ### Current limitations
 
 This is a simulated single-node pool. It does not implement a Stratum protocol, distributed chain-tip locking, adaptive difficulty, PPS/PPLNS payout distribution, credential rotation, rate limiting, or actual payout transfers. Schema changes require an explicit migration; `db.create_all()` does not alter existing Neon tables.
+
+## Frontend pages
+
+Serve the `frontend/` directory over HTTP and open `index.html`:
+
+- `index.html` — independent blockchain, mempool, and system overview.
+- `blockchain.html` — `/chain` block explorer and `/mempool` state.
+- `mining.html` — Proof-of-Work flow and CLI worker architecture.
+- `pools.html` — pool selection, monitoring, workers, jobs, shares, and payouts.
+- `transactions.html` — transaction lookup and mempool state.
+- `wallet.html` — read-only `/wallet/<address>` balance lookup.
+- `sandbox.html` — real versus educational project boundaries.
+
+The browser does not store worker API keys or private keys. Browser mining,
+wallet creation, transaction signing controls, and MetaMask/Web3 are not
+exposed by the current API.
+
+## Production-readiness workflow
+
+Pool schema changes are applied explicitly and transactionally:
+
+```powershell
+cd backend
+$env:DATABASE_URL = "postgresql://user:password@host/database"
+python -m database.migrations.runner
+```
+
+The runner creates `schema_migrations`, applies ordered files in
+`backend/database/migrations/`, and safely skips versions already recorded.
+The initial migration is additive: it bootstraps the documented blockchain
+tables on a fresh database and adds missing pool columns, keys, and indexes to
+an existing Neon schema without dropping tables or columns.
+It does not connect to a database during tests. Local SQLite test fixtures
+continue to use `create_all()` and are created and dropped per test.
+
+The PostgreSQL application startup path does not modify an existing schema.
+Set `AUTO_MIGRATE=true` only for a controlled deployment that intentionally
+runs the same migration runner at startup. Keep `DATABASE_URL` out of source
+control and rotate worker credentials if they are exposed.
+
+Run the backend checks from the backend directory:
+
+```powershell
+python -m compileall -q .
+python -m pytest -q
+```
+
+Pool routes validate input before invoking services; services own job,
+share, payout, and concurrency rules; repositories own database access; and
+models define persistence constraints. Integration tests use isolated
+in-memory SQLite and do not require a live PostgreSQL server.

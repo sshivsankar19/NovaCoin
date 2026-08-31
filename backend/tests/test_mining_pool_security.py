@@ -1,41 +1,14 @@
 from datetime import datetime, timedelta, UTC
 
 import pytest
-from flask import Flask
 from sqlalchemy.exc import IntegrityError
 
 from blockchain.block import Block
 from blockchain.blockchain import Blockchain
-from database.blockchain_loader import initialize_blockchain
 from database.models.mining_job_model import MiningJobModel
 from database.models.payout_model import PayoutModel
 from database.postgres import db
 from miner.worker import SimulatedMiningWorker
-from routes.pool_routes import create_pool_blueprint
-
-
-@pytest.fixture()
-def pool_app():
-    app = Flask(__name__)
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI="sqlite://",
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        POOL_JOB_TTL_SECONDS=60,
-        POOL_INACTIVITY_SECONDS=60,
-        TESTING=True
-    )
-    db.init_app(app)
-
-    with app.app_context():
-        db.create_all()
-        chain = Blockchain(difficulty=2)
-        initialize_blockchain(chain)
-        app.register_blueprint(create_pool_blueprint(chain))
-        yield app, chain
-        db.session.remove()
-        db.drop_all()
-
-
 def _register(client, blockchain_id, wallet="a" * 64, worker="worker"):
     pool = client.post("/pool", json={
         "blockchain_id": blockchain_id,
@@ -92,7 +65,15 @@ def test_rejected_duplicate_and_expired_share(pool_app):
     pool, miner, api_key = _register(client, chain.db_id)
     job = _job(client, pool, miner, api_key)
     headers = {"X-Worker-API-Key": api_key}
-    payload = {"job_id": job["id"], "miner_id": miner["id"], "nonce": 0}
+    block = SimulatedMiningWorker._block_from_job(job)
+    nonce = 0
+    while True:
+        block.nonce = nonce
+        block.hash = block.calculate_hash()
+        if not block.hash.startswith(job["share_target"]):
+            break
+        nonce += 1
+    payload = {"job_id": job["id"], "miner_id": miner["id"], "nonce": nonce}
 
     rejected = client.post("/pool/share", json=payload, headers=headers)
     assert rejected.status_code == 200

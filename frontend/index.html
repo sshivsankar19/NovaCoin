@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="System overview for a university blockchain and cryptocurrency mining laboratory.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h11v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+    <title>Dashboard | Cryptocurrency Mining &amp; Management System</title>
+  </head>
+  <body data-page="dashboard">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Dashboard">
+        <span class="brand-mark" aria-hidden="true">BC</span>
+        <span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span>
+      </a>
+      <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button>
+      <nav id="main-navigation" aria-label="Main navigation">
+        <a data-page-link="dashboard" href="index.html">Dashboard</a>
+        <a data-page-link="blockchain" href="blockchain.html">Blockchain</a>
+        <a data-page-link="mining" href="mining.html">Mining</a>
+        <a data-page-link="pools" href="pools.html">Pools</a>
+        <a data-page-link="transactions" href="transactions.html">Transactions</a>
+        <a data-page-link="wallet" href="wallet.html">Wallet</a>
+        <a data-page-link="sandbox" href="sandbox.html">Sandbox</a>
+      </nav>
+      <div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div>
+    </header>
+    <main>
+      <section class="page-intro">
+        <p class="eyebrow">SYSTEM OVERVIEW</p>
+        <h1>Dashboard</h1>
+        <p class="muted">Current state of the blockchain, mempool and mining system.</p>
+        <div class="page-actions"><button class="secondary-button" id="refresh-dashboard" type="button">Refresh system state</button><span class="last-updated" id="last-updated">Not updated</span></div>
+      </section>
+      <div id="notice" class="notice" role="alert" hidden></div>
+      <section class="section">
+        <div class="section-heading"><div><p class="eyebrow">SYSTEM STATUS</p><h2>Live protocol state</h2></div><span class="section-index">01</span></div>
+        <div id="dashboard-metrics" class="metric-grid"></div>
+        <div class="dashboard-grid">
+          <article class="panel"><div class="panel-heading"><h3>Blockchain</h3><span id="dashboard-chain-status" class="status-label">Loading</span></div><div id="dashboard-chain" class="panel-content empty">Loading chain data…</div></article>
+          <article class="panel"><div class="panel-heading"><h3>Mempool</h3><span id="dashboard-mempool-status" class="status-label">Loading</span></div><div id="dashboard-mempool" class="panel-content empty">Loading pending transactions…</div></article>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-heading"><div><p class="eyebrow">MINING CONTEXT</p><h2>System architecture</h2></div></div>
+        <article class="panel orientation-panel"><div><p class="eyebrow">CORE FLOW</p><h3>Transaction → Mempool → Block → Proof of Work</h3></div><p class="muted">Pool operations are intentionally managed in the dedicated Pools page. The dashboard remains useful without a selected pool.</p></article>
+      </section>
+    </main>
+    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer>
+    <script src="app.js"></script>
+  </body>
+</html>

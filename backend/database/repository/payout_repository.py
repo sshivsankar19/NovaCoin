@@ -26,6 +26,21 @@ class PayoutRepository:
         ).scalars().all()
 
     @staticmethod
+    def get_by_pool_page(pool_id, page=1, page_size=25):
+        condition = PayoutModel.mining_pool_id == pool_id
+        total = db.session.execute(
+            db.select(db.func.count(PayoutModel.id)).where(condition)
+        ).scalar_one()
+        items = db.session.execute(
+            db.select(PayoutModel)
+            .where(condition)
+            .order_by(PayoutModel.created_at.desc(), PayoutModel.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).scalars().all()
+        return items, total
+
+    @staticmethod
     def get_by_miner(miner_id):
 
         return db.session.execute(
@@ -33,6 +48,21 @@ class PayoutRepository:
             .where(PayoutModel.miner_id == miner_id)
             .order_by(PayoutModel.created_at.desc())
         ).scalars().all()
+
+    @staticmethod
+    def get_by_miner_page(miner_id, page=1, page_size=25):
+        condition = PayoutModel.miner_id == miner_id
+        total = db.session.execute(
+            db.select(db.func.count(PayoutModel.id)).where(condition)
+        ).scalar_one()
+        items = db.session.execute(
+            db.select(PayoutModel)
+            .where(condition, PayoutModel.status == "recorded")
+            .order_by(PayoutModel.created_at.desc(), PayoutModel.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).scalars().all()
+        return items, total
 
     @staticmethod
     def get_by_block(block_id):
@@ -58,7 +88,6 @@ class PayoutRepository:
 
     @staticmethod
     def _get_statistics(condition):
-
         row = db.session.execute(
             db.select(
                 db.func.count(PayoutModel.id),
@@ -75,7 +104,7 @@ class PayoutRepository:
                     Decimal("0")
                 )
             )
-            .where(condition)
+            .where(condition, PayoutModel.status == "recorded")
         ).one()
 
         return {

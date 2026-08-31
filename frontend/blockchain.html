@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Blockchain explorer for the Cryptocurrency Mining and Management System.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h11v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css"><title>Blockchain | Cryptocurrency Mining &amp; Management System</title>
+  </head>
+  <body data-page="blockchain">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">BC</span><span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span></a>
+      <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button>
+      <nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav>
+      <div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div>
+    </header>
+    <main>
+      <section class="page-intro"><p class="eyebrow">CHAIN EXPLORER</p><h1>Blockchain</h1><p class="muted">Inspect the serialized chain and pending transaction state returned by the backend.</p><div class="page-actions"><button class="secondary-button" id="load-chain" type="button">Refresh chain</button><button class="secondary-button" id="load-mempool" type="button">Refresh mempool</button><span class="last-updated" id="last-updated">Not updated</span></div></section>
+      <div id="notice" class="notice" role="alert" hidden></div>
+      <section class="section"><div id="chain-summary" class="summary-strip empty">Loading blockchain state…</div><div class="table-heading"><div><p class="eyebrow">LEDGER</p><h2>Blocks</h2></div><label class="filter-control">Search blocks<input data-table-filter="chain-blocks-table" type="search" placeholder="height, hash…"></label></div><div id="chain-blocks-table"></div></section>
+      <section class="section"><div class="section-heading"><div><p class="eyebrow">TRANSACTION QUEUE</p><h2>Mempool</h2></div></div><div id="mempool-result" class="panel empty">Loading mempool state…</div></section>
+    </main>
+    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
+  </body>
+</html>

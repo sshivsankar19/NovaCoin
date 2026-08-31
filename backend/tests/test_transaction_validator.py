@@ -1,26 +1,18 @@
 from blockchain.blockchain import Blockchain
-from blockchain.wallet import Wallet
 from blockchain.transaction import Transaction
 from blockchain.transaction_validator import TransactionValidator
+from blockchain.wallet import Wallet
 
-chain = Blockchain()
 
-alice = Wallet()
-bob = Wallet()
-chain.mine_pending_transactions(alice.address)
+def test_validator_accepts_a_signed_transaction_with_sufficient_balance():
+    chain = Blockchain(difficulty=1)
+    alice = Wallet()
+    bob = Wallet()
+    chain.mine_pending_transactions(alice.address)
+    transaction = Transaction(alice.address, bob.address, 5)
+    transaction.sign(alice)
 
-tx = Transaction(
-    alice.address,
-    bob.address,
-    5
-)
+    valid, message = TransactionValidator.validate(transaction, chain)
 
-tx.sign(alice)
-
-valid, message = TransactionValidator.validate(
-    tx,
-    chain
-)
-
-print(valid)
-print(message)
+    assert valid is True
+    assert isinstance(message, str)

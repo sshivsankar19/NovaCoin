@@ -7,6 +7,7 @@ from database.repository.mining_pool_repository import MiningPoolRepository
 from database.repository.miner_repository import MinerRepository
 from miner.mining_pool_service import MiningPoolService
 from miner.worker_auth import WorkerAuth
+from sqlalchemy.exc import IntegrityError
 
 
 class PoolManager:
@@ -34,7 +35,15 @@ class PoolManager:
             is_active=True
         )
 
-        return MiningPoolRepository.save(pool)
+        try:
+            return MiningPoolRepository.save(pool)
+        except IntegrityError:
+            # Another request may have won the unique blockchain race.
+            db.session.rollback()
+            existing = MiningPoolRepository.get_by_symbol(blockchain.symbol)
+            if existing:
+                return existing
+            raise
 
     @staticmethod
     def register_miner(
@@ -66,7 +75,13 @@ class PoolManager:
             last_seen=datetime.now(UTC)
         )
 
-        MinerRepository.save(miner)
+        try:
+            MinerRepository.save(miner)
+        except IntegrityError as error:
+            db.session.rollback()
+            raise ValueError(
+                "A miner with this wallet and worker name already exists."
+            ) from error
 
         return miner, credential
 

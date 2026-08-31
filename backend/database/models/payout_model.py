@@ -7,13 +7,6 @@ class PayoutModel(db.Model):
 
     __tablename__ = "mining_payouts"
 
-    __table_args__ = (
-        db.UniqueConstraint(
-            "block_id",
-            name="uq_mining_payout_block"
-        ),
-    )
-
     id = db.Column(
         db.Integer,
         primary_key=True
@@ -22,13 +15,15 @@ class PayoutModel(db.Model):
     mining_pool_id = db.Column(
         db.Integer,
         db.ForeignKey("mining_pools.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     miner_id = db.Column(
         db.Integer,
         db.ForeignKey("miners.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     block_id = db.Column(
@@ -62,4 +57,21 @@ class PayoutModel(db.Model):
         db.DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(UTC)
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "block_id",
+            name="uq_mining_payout_block"
+        ),
+        db.Index(
+            "ix_mining_payouts_pool_created",
+            "mining_pool_id",
+            "created_at"
+        ),
+        db.Index(
+            "ix_mining_payouts_miner_created",
+            "miner_id",
+            "created_at"
+        ),
     )

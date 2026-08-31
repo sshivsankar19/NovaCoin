@@ -1,37 +1,18 @@
-from blockchain.wallet import Wallet
-from blockchain.transaction import Transaction
 from blockchain.block import Block
+from blockchain.transaction import Transaction
+from blockchain.wallet import Wallet
 
-wallet1 = Wallet()
-wallet2 = Wallet()
 
-tx = Transaction(
-    wallet1.address,
-    wallet2.address,
-    50
-)
+def test_block_round_trip_preserves_hash_and_transactions():
+    wallet1 = Wallet()
+    wallet2 = Wallet()
+    transaction = Transaction(wallet1.address, wallet2.address, 50)
+    transaction.sign(wallet1)
+    block = Block(1, [transaction], "abc123", difficulty=1)
 
-tx.sign(wallet1)
+    data = block.to_dict()
+    restored = Block.from_dict(data)
 
-block = Block(
-    index=1,
-    transactions=[tx],
-    previous_hash="abc123"
-)
-
-data = block.to_dict()
-
-copy = Block.from_dict(data)
-
-print("Original")
-print(block.to_dict())
-
-print()
-
-print("Copy")
-print(copy.to_dict())
-
-print()
-
-print("Hashes Match:")
-print(block.hash == copy.hash)
+    assert restored.to_dict() == data
+    assert restored.hash == block.hash
+    assert restored.transactions[0].verify() is True

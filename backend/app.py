@@ -1,25 +1,35 @@
+import os
+
 from flask import Flask
 from flask import request
 from flask_cors import CORS
 from blockchain.blockchain import Blockchain
 from blockchain.wallet import Wallet
 from blockchain.transaction_validator import TransactionValidator
-from blockchain.transaction import Transaction
+from blockchain.transaction import Transaction, SYSTEM_ADDRESS
 from database.postgres import init_db, db
 from database.models import BlockchainModel
 from database.blockchain_loader import initialize_blockchain
 from database.block_persistence import BlockPersistence
 from routes.pool_routes import create_pool_blueprint
+from config import Settings
+from database.migrations import run_migrations
 wallets = {}
 app = Flask(__name__)
+app.config.from_object(Settings)
 init_db(app)
-app.config.setdefault("POOL_JOB_TTL_SECONDS", 120)
-app.config.setdefault("POOL_INACTIVITY_SECONDS", 120)
 CORS(app)
 chain = Blockchain(
     block_persister=BlockPersistence.save
 )
 with app.app_context():
+    # Local SQLite remains self-contained. Production PostgreSQL schemas are
+    # changed only by the explicit migration command; AUTO_MIGRATE is opt-in.
+    database_uri = app.config["SQLALCHEMY_DATABASE_URI"]
+    if database_uri.startswith("sqlite"):
+        db.create_all()
+    elif os.getenv("AUTO_MIGRATE", "").lower() in {"1", "true", "yes"}:
+        run_migrations()
     initialize_blockchain(chain)
 app.register_blueprint(create_pool_blueprint(chain))
 @app.route("/")
@@ -77,6 +87,11 @@ def add_transaction():
     except Exception:
         return {
             "error": "Invalid transaction format."
+        }, 400
+
+    if tx.sender == SYSTEM_ADDRESS:
+        return {
+            "error": "System transactions can only be created by mining."
         }, 400
 
     valid, message = TransactionValidator.validate(
@@ -154,6 +169,7 @@ def get_transaction(txid):
     return data
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
+        if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"):
+            db.create_all()
     
     app.run(host="127.0.0.1", port=5000, debug=True)

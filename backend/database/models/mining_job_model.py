@@ -15,7 +15,8 @@ class MiningJobModel(db.Model):
     mining_pool_id = db.Column(
         db.Integer,
         db.ForeignKey("mining_pools.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     miner_id = db.Column(
@@ -73,6 +74,7 @@ class MiningJobModel(db.Model):
         db.DateTime(timezone=True),
         nullable=True
     )
+
 
     expires_at = db.Column(
         db.DateTime(timezone=True),
