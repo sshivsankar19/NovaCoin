@@ -1,21 +1,141 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Mining pool management, worker monitoring, jobs, shares and payouts.">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h11v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="style.css"><title>Pools | Cryptocurrency Mining &amp; Management System</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Mining pool management, monitoring, workers, jobs, shares and payouts.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h14v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+    <title>Pools | Cryptocurrency Mining &amp; Management System</title>
   </head>
   <body data-page="pools">
-    <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">BC</span><span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Dashboard">
+        <span class="brand-mark" aria-hidden="true">BC</span>
+        <span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span>
+      </a>
+      <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button>
+      <nav id="main-navigation" aria-label="Main navigation">
+        <a data-page-link="dashboard" href="index.html">Dashboard</a>
+        <a data-page-link="blockchain" href="blockchain.html">Blockchain</a>
+        <a data-page-link="mining" href="mining.html">Mining</a>
+        <a data-page-link="pools" href="pools.html">Pools</a>
+        <a data-page-link="transactions" href="transactions.html">Transactions</a>
+        <a data-page-link="wallet" href="wallet.html">Wallet</a>
+        <a data-page-link="sandbox" href="sandbox.html">Sandbox</a>
+      </nav>
+      <div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div>
+    </header>
     <main>
-      <section class="page-intro"><p class="eyebrow">POOL OPERATIONS</p><h1>Mining pools</h1><p class="muted">Load a persisted pool to inspect its workers, jobs, shares, monitoring and accounting.</p></section>
+      <section class="page-intro">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">POOL OPERATIONS</p>
+            <h1>Mining pools</h1>
+            <p class="muted">Inspect persisted pool identity, worker activity, jobs, shares, analytics and reward accounting.</p>
+          </div>
+          <div class="page-actions">
+            <button class="secondary-button" id="refresh-pool" type="button">Refresh selected pool</button>
+            <span class="last-updated" id="last-updated">Not updated</span>
+          </div>
+        </div>
+      </section>
       <div id="notice" class="notice" role="alert" hidden></div>
-      <section class="section"><div class="pool-control-bar"><div><p class="eyebrow">POOL SELECTION</p><h2>Pool management</h2></div><div class="system-controls"><form id="pool-form" class="inline-form"><label for="pool-id">Pool ID</label><input id="pool-id" type="number" min="1" inputmode="numeric" placeholder="e.g. 1" required><button type="submit">Load pool</button></form><button class="secondary-button" id="refresh-pool" type="button">Refresh</button><span class="last-updated" id="last-updated">Not updated</span></div></div><div id="pool-identity" class="summary-strip empty">Select a pool to load pool data.</div></section>
-      <section class="section"><div class="monitoring-grid"><article class="panel"><p class="eyebrow">MONITORING</p><h2>Current activity</h2><div id="monitoring-summary" class="panel-content empty">Select a pool to load monitoring.</div></article><article class="panel"><p class="eyebrow">ACCOUNTING</p><h2>Rewards and fees</h2><div id="payout-summary" class="panel-content empty">Select a pool to load accounting.</div></article></div></section>
-      <section class="section"><div class="table-heading"><div><p class="eyebrow">MINERS</p><h2>Workers</h2></div><label class="filter-control">Search workers<input data-table-filter="workers-table" type="search" placeholder="miner, worker, status…"></label></div><div id="workers-table"></div><div class="table-heading"><div><p class="eyebrow">JOB QUEUE</p><h2>Mining jobs</h2></div><label class="filter-control">Status<select data-table-status="jobs-table"><option value="">All statuses</option><option value="active">Active</option><option value="completed">Completed</option><option value="stale">Stale</option><option value="expired">Expired</option></select></label></div><div id="jobs-table"></div></section>
-      <section class="section"><div class="table-heading"><div><p class="eyebrow">SHARE HISTORY</p><h2>Shares</h2></div><label class="filter-control">Search shares<input data-table-filter="shares-table" type="search" placeholder="miner, job, hash…"></label></div><div id="shares-table"></div><div class="table-heading"><div><p class="eyebrow">ACCOUNTING HISTORY</p><h2>Payouts</h2></div><label class="filter-control">Search payouts<input data-table-filter="payouts-table" type="search" placeholder="miner, block, status…"></label></div><div id="payouts-table"></div></section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">POOL SELECTION</p><h2>Pool identity</h2></div>
+          <span class="section-index">01</span>
+        </div>
+        <div class="pool-control-bar">
+          <form id="pool-form" class="inline-form">
+            <label for="pool-id">Pool ID</label>
+            <input id="pool-id" type="number" min="1" inputmode="numeric" placeholder="e.g. 1" required>
+            <button type="submit">Load pool</button>
+          </form>
+          <p class="muted capability-note">The current API exposes pool lookup by ID, not a pool directory.</p>
+        </div>
+        <div id="pool-identity" class="summary-strip empty">Select a pool to load pool identity and operations.</div>
+        <div class="panel capability-panel">
+          <p class="eyebrow">API CAPABILITIES</p>
+          <h3>Pool lifecycle</h3>
+          <p class="muted">Pool creation is available through <code>POST /pool</code>. Pool update and delete endpoints are not exposed by the current backend.</p>
+          <form id="create-pool-form" class="create-pool-form">
+            <label for="pool-blockchain-id">Blockchain ID<input id="pool-blockchain-id" type="number" min="1" placeholder="Required"></label>
+            <label for="pool-name">Name <span class="muted">(optional)</span><input id="pool-name" maxlength="100" placeholder="Optional pool name"></label>
+            <label for="pool-fee">Fee percent<input id="pool-fee" type="number" min="0" max="100" step="0.01" value="1"></label>
+            <button type="submit">Create pool</button>
+          </form>
+          <p id="create-pool-result" class="status-label" aria-live="polite">No pool creation requested.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">POOL STATISTICS</p><h2>Current accounting and activity</h2></div>
+          <span class="section-index">02</span>
+        </div>
+        <div id="pool-metrics" class="metric-grid">
+          <p class="empty">Select a pool to load statistics.</p>
+        </div>
+        <div class="monitoring-grid">
+          <article class="panel">
+            <p class="eyebrow">MONITORING</p>
+            <h3>Current pool activity</h3>
+            <div id="monitoring-summary" class="panel-content empty">Select a pool to load monitoring.</div>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">ANALYTICS</p>
+            <h3>Persisted analytics</h3>
+            <div id="analytics-summary" class="panel-content empty">Select a pool to load analytics.</div>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">PAYOUT TOTALS</p>
+            <h3>Reward accounting</h3>
+            <div id="payout-summary" class="panel-content empty">Select a pool to load payouts.</div>
+          </article>
+        </div>
+        <div class="table-heading"><div><p class="eyebrow">RECENT BLOCKS</p><h3>Blocks attributed to the pool</h3></div></div>
+        <div id="recent-blocks-table"><p class="empty">Select a pool to load recent blocks.</p></div>
+        <div class="table-heading"><div><p class="eyebrow">ANALYTICS HISTORY</p><h3>Recorded snapshots</h3></div></div>
+        <div id="analytics-history-table"><p class="empty">Select a pool to load analytics history.</p></div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">WORKERS AND JOBS</p><h2>Pool workforce</h2></div>
+          <span class="section-index">03</span>
+        </div>
+        <div class="table-heading">
+          <div><p class="eyebrow">MINERS</p><h3>Workers</h3></div>
+          <label class="filter-control">Search workers<input data-table-filter="workers-table" type="search" placeholder="miner, worker, status"></label>
+        </div>
+        <div id="workers-table"><p class="empty">Select a pool to load workers.</p></div>
+        <div class="table-heading">
+          <div><p class="eyebrow">JOB QUEUE</p><h3>Mining jobs</h3></div>
+          <label class="filter-control">Status<select data-table-status="jobs-table"><option value="">All statuses</option><option value="active">Active</option><option value="completed">Completed</option><option value="stale">Stale</option><option value="expired">Expired</option></select></label>
+        </div>
+        <div id="jobs-table"><p class="empty">Select a pool to load jobs.</p></div>
+      </section>
+
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">SHARES AND PAYOUTS</p><h2>Operational history</h2></div>
+          <span class="section-index">04</span>
+        </div>
+        <div class="table-heading">
+          <div><p class="eyebrow">SHARE HISTORY</p><h3>Recent shares</h3></div>
+          <label class="filter-control">Search shares<input data-table-filter="shares-table" type="search" placeholder="miner, job, hash"></label>
+        </div>
+        <div id="shares-table"><p class="empty">Select a pool to load shares.</p></div>
+        <div class="table-heading">
+          <div><p class="eyebrow">PAYOUT HISTORY</p><h3>Recorded payouts</h3></div>
+          <label class="filter-control">Search payouts<input data-table-filter="payouts-table" type="search" placeholder="miner, block, status"></label>
+        </div>
+        <div id="payouts-table"><p class="empty">Select a pool to load payouts.</p></div>
+      </section>
     </main>
-    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
+    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer>
+    <script src="app.js"></script>
   </body>
 </html>

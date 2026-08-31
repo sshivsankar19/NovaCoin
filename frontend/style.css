@@ -271,6 +271,36 @@ h3 {
   margin-bottom: 0;
 }
 
+.capability-panel {
+  margin-bottom: 26px;
+}
+
+.capability-note {
+  margin: 0;
+}
+
+.create-pool-form {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.create-pool-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.create-pool-form input {
+  min-width: 165px;
+}
+
+.create-pool-form + .status-label {
+  margin-bottom: 0;
+  margin-top: 12px;
+}
+
 .subsection-heading {
   align-items: baseline;
   display: flex;
@@ -658,6 +688,26 @@ pre {
   margin-top: 12px;
 }
 
+.command-block {
+  background: #0d1116;
+  border: 1px solid var(--border);
+  color: #c3d0dc;
+  margin: 18px 0 0;
+  padding: 13px;
+}
+
+.mining-note {
+  border-top: 1px solid var(--border);
+  margin: 18px 0 0;
+  padding-top: 14px;
+}
+
+.mining-explanation {
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
 .process-list,
 .plain-list {
   margin: 0 0 17px;
@@ -805,6 +855,7 @@ footer {
   .system-controls,
   .inline-form,
   .lookup-form,
+  .create-pool-form,
   .page-actions {
     align-items: stretch;
     width: 100%;
@@ -815,7 +866,8 @@ footer {
   }
 
   .inline-form input,
-  .lookup-form input {
+  .lookup-form input,
+  .create-pool-form input {
     flex: 1;
     min-width: 0;
   }
