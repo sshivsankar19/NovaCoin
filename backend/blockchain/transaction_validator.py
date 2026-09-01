@@ -1,6 +1,7 @@
 from blockchain.transaction import SYSTEM_ADDRESS
 from blockchain.wallet import Wallet
-from datetime import datetime, UTC
+from datetime import datetime, timezone
+UTC = timezone.utc
 class TransactionValidator:
 
     @staticmethod

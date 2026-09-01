@@ -40,8 +40,14 @@ class MiningPoolRepository:
 
     @staticmethod
     def get_active():
-
         return db.session.execute(
             db.select(MiningPoolModel)
             .where(MiningPoolModel.is_active == True)
+        ).scalars().all()
+
+    @staticmethod
+    def get_all():
+        return db.session.execute(
+            db.select(MiningPoolModel)
+            .order_by(MiningPoolModel.id)
         ).scalars().all()

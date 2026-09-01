@@ -1,6 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc
 from math import ceil
 from math import isfinite
 import re
@@ -347,6 +348,14 @@ def _valid_wallet_address(address):
 
 def create_pool_blueprint(blockchain):
     pool_blueprint = Blueprint("mining_pool", __name__)
+
+    @pool_blueprint.get("/pools")
+    def get_pools():
+        pools = MiningPoolRepository.get_all()
+        return jsonify({
+            "count": len(pools),
+            "pools": [_serialize_pool(pool) for pool in pools],
+        })
 
     @pool_blueprint.post("/pool")
     def create_pool():

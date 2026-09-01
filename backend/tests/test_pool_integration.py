@@ -31,6 +31,28 @@ def test_pool_validation_and_idempotent_create(pool_app):
     assert pool["blockchain_id"] == chain.db_id
 
 
+def test_pool_directory_returns_empty_then_created_pool(pool_app):
+    app, chain = pool_app
+    client = app.test_client()
+
+    empty = client.get("/pools")
+    assert empty.status_code == 200
+    assert empty.get_json() == {"count": 0, "pools": []}
+
+    created = client.post(
+        "/pool",
+        json={"blockchain_id": chain.db_id, "name": "Directory", "fee_percent": 2},
+    )
+    assert created.status_code == 201
+    pool = created.get_json()["pool"]
+
+    directory = client.get("/pools")
+    assert directory.status_code == 200
+    body = directory.get_json()
+    assert body["count"] == 1
+    assert body["pools"] == [pool]
+
+
 def test_monitoring_analytics_pagination_and_shutdown(pool_app):
     app, chain = pool_app
     client = app.test_client()

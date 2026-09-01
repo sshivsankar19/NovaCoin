@@ -1,7 +1,8 @@
 from database.postgres import db
 from database.models.mining_job_model import MiningJobModel
 from database.models.mining_pool_model import MiningPoolModel
-from datetime import datetime, UTC
+from datetime import datetime, timezone
+UTC = timezone.utc
 
 
 class MiningJobRepository:

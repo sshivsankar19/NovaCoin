@@ -1,4 +1,5 @@
-from datetime import datetime, UTC
+from datetime import datetime, timezone
+UTC = timezone.utc
 
 from database.postgres import db
 from database.models.mining_pool_model import MiningPoolModel

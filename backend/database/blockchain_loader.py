@@ -38,3 +38,16 @@ def initialize_blockchain(blockchain):
     )
 
     return saved
+
+
+def refresh_blockchain(blockchain):
+    """Refresh the in-memory chain from the persisted authoritative chain."""
+    if blockchain.db_id is None:
+        return
+
+    blocks = BlockRepository.get_all(blockchain.db_id)
+    if blocks:
+        blockchain.chain = [
+            BlockMapper.to_domain(block)
+            for block in blocks
+        ]

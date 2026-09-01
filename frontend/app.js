@@ -7,6 +7,7 @@
   const state = {
     chain: null,
     mempool: null,
+    pools: [],
     poolId: null,
     pool: null,
     monitoring: null,
@@ -136,6 +137,7 @@
     chain: () => request("/chain"),
     mempool: () => request("/mempool"),
     pool: (id) => request(`/pool/${id}`),
+    pools: () => request("/pools"),
     monitoring: (id) => request(`/pool/${id}/monitoring?limit=${PAGE_SIZE}`),
     analytics: (id) => request(`/pool/${id}/analytics?page=1&page_size=${PAGE_SIZE}`),
     miners: (id) => request(`/pool/${id}/miners`),
@@ -534,6 +536,40 @@
     if (!target || !state.pool) {
       return;
     }
+
+    function renderPoolDirectory() {
+      const target = $("pool-directory");
+      if (!target) {
+        return;
+      }
+      if (!state.pools.length) {
+        target.innerHTML = `
+          <p class="empty">No mining pools have been created yet.</p>
+          <p class="muted">Create a pool below to make it available here.</p>
+        `;
+        return;
+      }
+      target.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Blockchain</th><th>Algorithm</th><th>Fee</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              ${state.pools.map((pool) => `
+                <tr>
+                  <td>${escapeHtml(pool.id)}</td>
+                  <td>${escapeHtml(valueOrUnavailable(pool.name))}</td>
+                  <td>${escapeHtml(valueOrUnavailable(pool.blockchain_id))}</td>
+                  <td>${escapeHtml(valueOrUnavailable(pool.algorithm))}</td>
+                  <td>${escapeHtml(valueOrUnavailable(pool.fee_percent))}%</td>
+                  <td>${badge(pool.is_active ? "active" : "inactive")}</td>
+                  <td><button class="text-button" type="button" data-pool-select="${escapeHtml(pool.id)}">Select</button></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
     const stats = state.pool.statistics || {};
     const analytics = state.analytics?.statistics || {};
     const jobs = stats.job_counts || analytics.job_counts || {};
@@ -712,6 +748,24 @@
     }
   }
 
+  async function loadPools() {
+    const target = $("pool-directory");
+    if (target) {
+      target.innerHTML = '<p class="empty">Loading available pools…</p>';
+    }
+    try {
+      const response = await api.pools();
+      state.pools = response.pools || [];
+      renderPoolDirectory();
+    } catch (error) {
+      state.pools = [];
+      if (target) {
+        target.innerHTML = `<p class="empty">Pool directory unavailable.</p>`;
+      }
+      showNotice(error.message);
+    }
+  }
+
   async function loadPool() {
     if (!state.poolId) {
       showNotice("Enter a pool ID before loading pool operations.");
@@ -787,6 +841,7 @@
       $("create-pool-result").textContent = `Created pool #${pool.id}.`;
       $("pool-id").value = pool.id;
       state.poolId = pool.id;
+      await loadPools();
       await loadPool();
     } catch (error) {
       $("create-pool-result").textContent = "Pool was not created.";
@@ -887,6 +942,13 @@
       }
     });
     document.addEventListener("click", async (event) => {
+      const poolButton = event.target.closest("[data-pool-select]");
+      if (poolButton) {
+        state.poolId = Number(poolButton.dataset.poolSelect);
+        $("pool-id").value = state.poolId;
+        await loadPool();
+        return;
+      }
       const button = event.target.closest("[data-copy]");
       if (!button) {
         return;
@@ -954,6 +1016,8 @@
       loadChain();
       loadMiningPoolRecords();
     } else if (page === "pools") {
+      loadPools();
+      renderPoolDirectory();
       renderWorkers();
       renderJobs();
       renderShares();
