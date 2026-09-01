@@ -2,13 +2,15 @@ from database.block_persistence import BlockPersistence
 from database.models.payout_model import PayoutModel
 from blockchain.block import Block
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
-from datetime import datetime, UTC
+from datetime import datetime, timezone
+UTC = timezone.utc
 from decimal import Decimal
 from database.postgres import db
 from database.repository.mining_pool_repository import MiningPoolRepository
 from database.repository.mining_job_repository import MiningJobRepository
 from database.repository.payout_repository import PayoutRepository
 from database.repository.block_repository import BlockRepository
+from database.blockchain_loader import refresh_blockchain
 from sqlalchemy.exc import IntegrityError
 
 class BlockSubmissionService:
@@ -53,6 +55,7 @@ class BlockSubmissionService:
         miner,
         nonce
     ):
+        refresh_blockchain(blockchain)
 
         pool = MiningPoolRepository.get_by_id(job.mining_pool_id)
 

@@ -1,4 +1,5 @@
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc
 from decimal import Decimal
 
 from database.postgres import db

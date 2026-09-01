@@ -9,10 +9,163 @@
   <body data-page="sandbox">
     <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">BC</span><span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
     <main>
-      <section class="page-intro"><p class="eyebrow">EDUCATIONAL ENVIRONMENT</p><h1>Sandbox</h1><p class="muted">A technical guide to the real and educational boundaries of this blockchain project.</p></section>
-      <section class="section"><div class="sandbox-grid"><article class="panel"><p class="eyebrow">REAL BLOCKCHAIN OPERATIONS</p><h2>Implemented concepts</h2><ul class="plain-list"><li>Transactions and signatures</li><li>Mempool validation</li><li>Blocks and chain validation</li><li>Proof-of-Work mining</li><li>Pool jobs, shares and payouts</li></ul></article><article class="panel"><p class="eyebrow">SIMULATED / EDUCATIONAL</p><h2>Learning boundary</h2><ul class="plain-list muted"><li>Beginner cryptocurrency concepts</li><li>Mining and nonce-search explanation</li><li>Pool accounting interpretation</li><li>Future Web3 integration concepts</li></ul><p class="muted">Interactive functionality is available only where supported by the current backend. Simulated learning values must not be interpreted as real cryptocurrency.</p></article></div></section>
-      <section class="section"><article class="panel"><p class="eyebrow">CURRENT LIMITATIONS</p><h2>Not exposed through this interface</h2><p class="muted">Browser mining, private-key storage, wallet creation, transaction signing controls and MetaMask connection are not implemented. The authenticated worker remains a CLI operation.</p></article></section>
+      <div id="notice" class="notice" role="alert" hidden></div>
+      <section class="page-intro">
+        <p class="eyebrow">EDUCATIONAL ENVIRONMENT</p>
+        <h1>Sandbox / Educational Mode</h1>
+        <p class="muted">No real cryptocurrency is used in this environment. Sandbox activity does not affect the real NovaCoin mining system.</p>
+      </section>
+
+      <section class="section">
+        <div class="sandbox-demo">
+          <article class="panel sandbox-wallet-panel">
+            <p class="eyebrow">SIMULATED WALLET</p>
+            <h2>Your Demo Wallet</h2>
+            <div class="sandbox-balance">
+              <span>Balance</span>
+              <strong id="sandbox-balance">100 NVC</strong>
+            </div>
+            <p class="muted">This sandbox is for teaching the mining flow only. It does not create a real wallet or transfer real cryptocurrency.</p>
+            <button id="sandbox-create-transaction" type="button" onclick="advanceSandbox();">Create demo transaction</button>
+          </article>
+
+          <article class="panel sandbox-flow-panel">
+            <p class="eyebrow">MINING FLOW</p>
+            <h2>Demo progression</h2>
+            <div class="sandbox-flow" aria-live="polite">
+              <div class="sandbox-step active" data-step="wallet">Your Demo Wallet</div>
+              <div class="sandbox-arrow" aria-hidden="true">↓</div>
+              <div class="sandbox-step" data-step="transaction">Create Demo Transaction</div>
+              <div class="sandbox-arrow" aria-hidden="true">↓</div>
+              <div class="sandbox-step" data-step="pending">Pending Transaction</div>
+              <div class="sandbox-arrow" aria-hidden="true">↓</div>
+              <div class="sandbox-step" data-step="mining">Mining Concept</div>
+              <div class="sandbox-arrow" aria-hidden="true">↓</div>
+              <div class="sandbox-step" data-step="block">Proof-of-Work Concept</div>
+              <div class="sandbox-arrow" aria-hidden="true">↓</div>
+              <div class="sandbox-step" data-step="balance">Simulated Balance Update</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="sandbox-grid">
+          <article class="panel">
+            <p class="eyebrow">REAL BLOCKCHAIN OPERATIONS</p>
+            <h2>Implemented concepts</h2>
+            <ul class="plain-list">
+              <li>Transactions and signatures</li>
+              <li>Mempool validation</li>
+              <li>Blocks and chain validation</li>
+              <li>Proof-of-Work mining</li>
+              <li>Pool jobs, shares and payouts</li>
+            </ul>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">SIMULATED / EDUCATIONAL</p>
+            <h2>Learning boundary</h2>
+            <ul class="plain-list muted">
+              <li>Beginner cryptocurrency concepts</li>
+              <li>Mining and nonce-search explanation</li>
+              <li>Pool accounting interpretation</li>
+              <li>Future Web3 integration concepts</li>
+            </ul>
+            <p class="muted">Interactive functionality is available only where supported by the current backend. Simulated values must not be interpreted as real cryptocurrency.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <article class="panel">
+          <p class="eyebrow">CURRENT LIMITATIONS</p>
+          <h2>Not exposed through this interface</h2>
+          <p class="muted">Browser mining, private-key storage, wallet creation, transaction signing controls and MetaMask connection are not implemented. The authenticated worker remains a CLI operation.</p>
+        </article>
+      </section>
     </main>
-    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
+    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer>
+    <script>
+      function advanceSandbox() {
+        const button = document.getElementById('sandbox-create-transaction');
+        const notice = document.getElementById('notice');
+        const steps = [...document.querySelectorAll('.sandbox-step')];
+        const balanceElement = document.getElementById('sandbox-balance');
+        let stage = Number(button.dataset.stage || 0);
+        let balance = Number(button.dataset.balance || 100);
+
+        if (stage === 0) {
+          stage = 1;
+          button.dataset.stage = String(stage);
+          button.dataset.balance = String(balance);
+          steps.forEach((step, index) => {
+            step.classList.toggle('active', index === 1);
+            step.classList.toggle('complete', index < 1);
+          });
+          notice.textContent = 'Simulated demo transaction created. This does not create a real transaction or real mempool entry.';
+          notice.hidden = false;
+          return;
+        }
+        if (stage === 1) {
+          stage = 2;
+          button.dataset.stage = String(stage);
+          steps.forEach((step, index) => {
+            step.classList.toggle('active', index === 2);
+            step.classList.toggle('complete', index < 2);
+          });
+          notice.textContent = 'Pending transaction is shown only as a teaching step. No real transaction is submitted to the production system.';
+          notice.hidden = false;
+          return;
+        }
+        if (stage === 2) {
+          stage = 3;
+          button.dataset.stage = String(stage);
+          steps.forEach((step, index) => {
+            step.classList.toggle('active', index === 3);
+            step.classList.toggle('complete', index < 3);
+          });
+          notice.textContent = 'Mining concept: the worker changes the nonce until the hash satisfies the target. This is educational only.';
+          notice.hidden = false;
+          return;
+        }
+        if (stage === 3) {
+          stage = 4;
+          balance = 75;
+          button.dataset.stage = String(stage);
+          button.dataset.balance = String(balance);
+          balanceElement.textContent = `${balance} NVC`;
+          steps.forEach((step, index) => {
+            step.classList.toggle('active', index === 4);
+            step.classList.toggle('complete', index < 4);
+          });
+          notice.textContent = 'Simulated confirmation: this flow represents a valid block concept, not a real blockchain mutation.';
+          notice.hidden = false;
+          return;
+        }
+        if (stage === 4) {
+          stage = 5;
+          button.dataset.stage = String(stage);
+          steps.forEach((step, index) => {
+            step.classList.toggle('active', index === 5);
+            step.classList.toggle('complete', index < 5);
+          });
+          notice.textContent = 'Sandbox complete: simulated balance update only. No real wallet, blockchain, payout, or mining state changes are made.';
+          notice.hidden = false;
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const balanceElement = document.getElementById('sandbox-balance');
+        if (balanceElement) {
+          balanceElement.textContent = '100 NVC';
+        }
+        const steps = [...document.querySelectorAll('.sandbox-step')];
+        steps.forEach((step, index) => {
+          step.classList.toggle('active', index === 0);
+          step.classList.toggle('complete', false);
+        });
+      });
+    </script>
+    <script src="app.js"></script>
   </body>
 </html>

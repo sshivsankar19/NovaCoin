@@ -1,6 +1,7 @@
 import hashlib
 import json
-from datetime import datetime, UTC
+from datetime import datetime, timezone
+UTC = timezone.utc
 from blockchain.transaction import Transaction
 
 

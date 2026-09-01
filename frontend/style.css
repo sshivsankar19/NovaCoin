@@ -275,6 +275,20 @@ h3 {
   margin-bottom: 26px;
 }
 
+.directory-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 18px;
+}
+
+.directory-panel .empty {
+  margin: 14px 0 4px;
+}
+
+.directory-panel .muted {
+  margin-bottom: 14px;
+}
+
 .capability-note {
   margin: 0;
 }
@@ -443,6 +457,74 @@ input::placeholder {
 .mining-grid,
 .monitoring-grid,
 .lookup-grid,
+.sandbox-demo {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+}
+
+.sandbox-wallet-panel,
+.sandbox-flow-panel {
+  min-height: 100%;
+}
+
+.sandbox-balance {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0 16px;
+  padding: 18px 16px;
+}
+
+.sandbox-balance span {
+  color: var(--muted);
+}
+
+.sandbox-balance strong {
+  color: var(--text);
+  font-size: 26px;
+  letter-spacing: -.02em;
+}
+
+.sandbox-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.sandbox-step {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  min-height: 42px;
+  padding: 9px 12px;
+  text-align: center;
+  transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.sandbox-step.active {
+  background: rgba(149, 184, 216, 0.12);
+  border-color: var(--blue);
+  color: var(--text);
+}
+
+.sandbox-step.complete {
+  background: rgba(85, 201, 138, 0.08);
+  border-color: var(--green);
+  color: var(--text);
+}
+
+.sandbox-arrow {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
 .sandbox-grid {
   display: grid;
   gap: 20px;

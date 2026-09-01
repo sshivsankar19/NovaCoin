@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
+UTC = timezone.utc
 
 from database.postgres import db
 from database.models.mining_job_model import MiningJobModel
@@ -8,6 +9,7 @@ from database.repository.share_repository import ShareRepository
 from database.repository.miner_repository import MinerRepository
 from database.repository.mining_pool_repository import MiningPoolRepository
 from database.repository.block_repository import BlockRepository
+from database.blockchain_loader import refresh_blockchain
 from sqlalchemy.exc import IntegrityError
 
 from blockchain.block import Block
@@ -120,6 +122,7 @@ class MiningPoolService:
         share_difficulty=None,
         job_ttl_seconds=120
     ):
+        refresh_blockchain(blockchain)
 
         pool = MiningPoolRepository.get_by_id(pool_id)
 
@@ -223,6 +226,7 @@ class MiningPoolService:
         hashes_checked=None,
         elapsed_seconds=None
     ):
+        refresh_blockchain(blockchain)
 
         job = MiningJobRepository.get_for_update(
             job_id

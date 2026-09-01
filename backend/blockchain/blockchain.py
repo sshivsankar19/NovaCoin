@@ -8,8 +8,8 @@ class Blockchain:
 
     def __init__(
         self,
-        name="Blockchain Crypto Miner",
-        symbol="BCM",
+        name="NovaCoin",
+        symbol="NVC",
         algorithm="SHA256",
         difficulty=3,
         block_reward=10,
@@ -194,11 +194,11 @@ class Blockchain:
         blockchain = cls(
             name=data.get(
                 "name",
-                "Blockchain Crypto Miner"
+                "NovaCoin"
             ),
             symbol=data.get(
                 "symbol",
-                "BCM"
+                "NVC"
             ),
             algorithm=data.get(
                 "algorithm",

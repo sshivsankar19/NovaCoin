@@ -2,7 +2,8 @@ import hashlib
 import hmac
 import secrets
 
-from datetime import datetime, UTC
+from datetime import datetime, timezone
+UTC = timezone.utc
 
 from database.postgres import db
 from database.repository.miner_repository import MinerRepository
