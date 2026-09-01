@@ -365,15 +365,6 @@ wallet creation, transaction signing controls, and MetaMask/Web3 are not
 exposed by the current API.
 
 ## Production-readiness workflow
-
-Pool schema changes are applied explicitly and transactionally:
-
-```powershell
-cd backend
-$env:DATABASE_URL = "postgresql://user:password@host/database"
-python -m database.migrations.runner
-```
-
 The runner creates `schema_migrations`, applies ordered files in
 `backend/database/migrations/`, and safely skips versions already recorded.
 The initial migration is additive: it bootstraps the documented blockchain
