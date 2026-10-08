@@ -463,6 +463,11 @@ input::placeholder {
   grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
 }
 
+.sandbox-demo > *,
+.sandbox-grid > * {
+  min-width: 0;
+}
+
 .sandbox-wallet-panel,
 .sandbox-flow-panel {
   min-height: 100%;
@@ -551,6 +556,7 @@ input::placeholder {
 .sandbox-grid {
   display: grid;
   gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .dashboard-grid,
@@ -558,7 +564,16 @@ input::placeholder {
 .monitoring-grid,
 .lookup-grid,
 .sandbox-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.sandbox-grid .result,
+.sandbox-grid code,
+.sandbox-grid dd,
+.sandbox-demo .muted {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .panel {
