@@ -42,3 +42,8 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Optional Hedera Web3 tooling
+web3/node_modules/
+web3/artifacts/
+web3/cache/

@@ -1,4 +1,5 @@
 from database.block_persistence import BlockPersistence
+from blockchain.transaction_validator import TransactionValidator
 from database.models.payout_model import PayoutModel
 from blockchain.block import Block
 from blockchain.transaction import Transaction, SYSTEM_ADDRESS
@@ -131,6 +132,11 @@ class BlockSubmissionService:
             db.session.commit()
             return False, "Block is based on an outdated chain."
 
+        if getattr(blockchain, "mainnet_consensus", False):
+            valid, message = TransactionValidator.validate_block(block, blockchain)
+            if not valid:
+                return False, message
+
         try:
             # Keep block rows, the winning job, and any staged share in the
             # same database transaction.
@@ -157,7 +163,7 @@ class BlockSubmissionService:
                 gross_reward=gross_reward,
                 pool_fee=pool_fee,
                 miner_reward=miner_reward,
-                status="recorded"
+                status="canonical"
             )
             PayoutRepository.save(payout, commit=False)
 

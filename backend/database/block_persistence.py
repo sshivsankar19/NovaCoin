@@ -1,12 +1,13 @@
 from database.postgres import db
 from database.repository.block_repository import BlockRepository
 from database.repository.transaction_repository import TransactionRepository
+from database.repository.blockchain_repository import BlockchainRepository
 
 
 class BlockPersistence:
 
     @staticmethod
-    def save(block, blockchain_id, commit=True):
+    def save(block, blockchain_id, commit=True, canonical=True, canonical_work=None):
 
         try:
 
@@ -29,6 +30,13 @@ class BlockPersistence:
                     commit=False
                 )
 
+            if canonical:
+                BlockchainRepository.set_canonical_state(
+                    blockchain_id,
+                    block.hash,
+                    block.index,
+                    canonical_work if canonical_work is not None else 0,
+                )
             if commit:
                 db.session.commit()
 

@@ -50,9 +50,15 @@ class _Engine:
 def test_migrations_are_idempotent_without_a_live_database():
     engine = _Engine()
 
-    assert run_migrations(engine) == ["0001_mining_pool"]
+    assert run_migrations(engine) == [
+        "0001_mining_pool",
+        "0002_network_namespace",
+        "0003_network_symbol_constraint",
+        "0004_transaction_fees",
+        "0005_durable_forks",
+    ]
     assert run_migrations(engine) == []
-    assert len(engine.connection.executed_scripts) == 1
+    assert len(engine.connection.executed_scripts) == 5
 
 
 def test_fresh_migration_bootstraps_core_and_pool_tables():

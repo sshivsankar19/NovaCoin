@@ -1,10 +1,28 @@
 from decimal import Decimal
 
 from database.models.payout_model import PayoutModel
+from database.models.block_model import BlockModel
 from database.postgres import db
 
 
 class PayoutRepository:
+
+    @staticmethod
+    def reconcile_for_blockchain(blockchain_id, canonical_hashes):
+        payouts = db.session.execute(
+            db.select(PayoutModel)
+            .join(BlockModel, PayoutModel.block_id == BlockModel.id)
+            .where(BlockModel.blockchain_id == blockchain_id)
+        ).scalars().all()
+        canonical_hashes = set(canonical_hashes)
+        for payout in payouts:
+            block = db.session.get(BlockModel, payout.block_id)
+            payout.status = (
+                "canonical"
+                if block is not None and block.hash in canonical_hashes
+                else "orphaned"
+            )
+        return payouts
 
     @staticmethod
     def save(payout, commit=True):
@@ -57,7 +75,7 @@ class PayoutRepository:
         ).scalar_one()
         items = db.session.execute(
             db.select(PayoutModel)
-            .where(condition, PayoutModel.status == "recorded")
+            .where(condition, PayoutModel.status.in_(("recorded", "canonical")))
             .order_by(PayoutModel.created_at.desc(), PayoutModel.id.desc())
             .offset((page - 1) * page_size)
             .limit(page_size)
@@ -104,7 +122,7 @@ class PayoutRepository:
                     Decimal("0")
                 )
             )
-            .where(condition, PayoutModel.status == "recorded")
+            .where(condition, PayoutModel.status.in_(("recorded", "canonical")))
         ).one()
 
         return {

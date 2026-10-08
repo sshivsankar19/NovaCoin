@@ -21,7 +21,13 @@ class BlockchainModel(db.Model):
     symbol = db.Column(
         db.String(20),
         nullable=False,
-        unique=True
+        unique=False
+    )
+
+    network_id = db.Column(
+        db.String(128),
+        nullable=True,
+        index=True
     )
 
     algorithm = db.Column(
@@ -54,4 +60,19 @@ class BlockchainModel(db.Model):
         db.DateTime,
         default=lambda: datetime.now(UTC),
         nullable=False
+    )
+
+    canonical_tip_hash = db.Column(
+        db.String(64),
+        nullable=True
+    )
+
+    canonical_height = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    canonical_work = db.Column(
+        db.Numeric(78, 0),
+        nullable=True
     )

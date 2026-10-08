@@ -24,12 +24,14 @@ class BlockchainRepository:
         )
 
     @staticmethod
-    def get_by_symbol(symbol):
+    def get_by_symbol(symbol, network_id=None):
 
-        return db.session.execute(
-            db.select(BlockchainModel)
-            .where(BlockchainModel.symbol == symbol)
-        ).scalar_one_or_none()
+        statement = db.select(BlockchainModel).where(
+            BlockchainModel.symbol == symbol
+        )
+        if network_id is not None:
+            statement = statement.where(BlockchainModel.network_id == network_id)
+        return db.session.execute(statement).scalar_one_or_none()
 
     @staticmethod
     def get_all():
@@ -53,3 +55,13 @@ class BlockchainRepository:
         db.session.commit()
 
         return True
+
+    @staticmethod
+    def set_canonical_state(blockchain_id, tip_hash, height, work):
+        model = db.session.get(BlockchainModel, blockchain_id)
+        if model is None:
+            raise ValueError("Blockchain not found.")
+        model.canonical_tip_hash = tip_hash
+        model.canonical_height = height
+        model.canonical_work = work
+        return model

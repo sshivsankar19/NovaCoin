@@ -163,28 +163,27 @@ class MiningPoolService:
                 "Share difficulty must be lower than network difficulty."
             )
 
-        reward_tx = Transaction(
-            SYSTEM_ADDRESS,
-            miner.wallet_address,
-            blockchain.mining_reward
-        )
-
-        transactions = [
-            reward_tx
-        ]
-
-        transactions.extend(
-            transaction
-            for transaction in blockchain.get_pending_transactions()
-            if transaction.sender != SYSTEM_ADDRESS
-        )
-
-        block = Block(
-            index=len(blockchain.chain),
-            transactions=transactions,
-            previous_hash=latest_block.hash,
-            difficulty=blockchain.difficulty
-        )
+        if getattr(blockchain, "mainnet_consensus", False):
+            block = blockchain.build_pending_block(miner.wallet_address)
+            transactions = block.transactions
+        else:
+            reward_tx = Transaction(
+                SYSTEM_ADDRESS,
+                miner.wallet_address,
+                blockchain.mining_reward
+            )
+            transactions = [reward_tx]
+            transactions.extend(
+                transaction
+                for transaction in blockchain.get_pending_transactions()
+                if transaction.sender != SYSTEM_ADDRESS
+            )
+            block = Block(
+                index=len(blockchain.chain),
+                transactions=transactions,
+                previous_hash=latest_block.hash,
+                difficulty=blockchain.difficulty
+            )
 
         block_template = {
             "index": block.index,

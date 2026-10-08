@@ -50,7 +50,11 @@ class BlockMapper:
             nonce=model.nonce
         )
 
-        block.timestamp = model.timestamp.isoformat()
+        from datetime import timezone
+        timestamp = model.timestamp
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        block.timestamp = timestamp.isoformat()
         block.hash = model.hash
 
         return block

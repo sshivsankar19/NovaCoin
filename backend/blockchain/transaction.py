@@ -10,11 +10,13 @@ from ecdsa import VerifyingKey
 SYSTEM_ADDRESS = "SYSTEM"
 class Transaction:
 
-    def __init__(self, sender, receiver, amount):
+    def __init__(self, sender, receiver, amount, fee=0, atomic=False):
 
         self.sender = sender
         self.receiver = receiver
         self.amount = amount
+        self.fee = fee
+        self.atomic = atomic
         self.timestamp = datetime.now(UTC).isoformat()
         self.txid = self.calculate_hash()
         self._signed = False
@@ -29,6 +31,9 @@ class Transaction:
             "amount": self.amount,
             "timestamp": self.timestamp,
         }
+        if self.atomic:
+            data["fee"] = self.fee
+            data["unit"] = "atomic"
 
         encoded = json.dumps(
             data,
@@ -59,8 +64,10 @@ class Transaction:
     
     def verify(self):
         if self.sender == SYSTEM_ADDRESS:
-            return True
+            return self.atomic and self.calculate_hash() == self.txid
         if self.signature is None:
+            return False
+        if self.calculate_hash() != self.txid:
             return False
 
         try:
@@ -88,7 +95,7 @@ class Transaction:
         )
     def to_dict(self):
 
-        return {
+        data = {
             "txid": self.txid,
             "sender": self.sender,
             "receiver": self.receiver,
@@ -97,13 +104,36 @@ class Transaction:
             "signature": self.signature.hex() if self.signature else None,
             "public_key": self.public_key.to_string().hex() if self.public_key else None
         }
+        if self.atomic:
+            data["fee"] = self.fee
+            data["unit"] = "atomic"
+        return data
+
+    @property
+    def is_coinbase(self):
+        return self.sender == SYSTEM_ADDRESS
+
+    @classmethod
+    def atomic(cls, sender, receiver, amount, fee=0):
+        if not isinstance(amount, int) or isinstance(amount, bool):
+            raise ValueError("Atomic amount must be an integer.")
+        if not isinstance(fee, int) or isinstance(fee, bool):
+            raise ValueError("Atomic fee must be an integer.")
+        return cls(sender, receiver, amount, fee=fee, atomic=True)
+
+    @classmethod
+    def coinbase(cls, receiver, reward):
+        return cls.atomic(SYSTEM_ADDRESS, receiver, reward, fee=0)
     @classmethod
     def from_dict(cls, data):
 
+        atomic = data.get("unit") == "atomic"
         tx = cls(
             data["sender"],
             data["receiver"],
-            data["amount"]
+            data["amount"],
+            fee=data.get("fee", 0),
+            atomic=atomic,
         )
 
         tx.timestamp = data["timestamp"]
@@ -128,6 +158,8 @@ class Transaction:
             "sender",
             "receiver",
             "amount",
+            "fee",
+            "atomic",
             "timestamp"
         }
 

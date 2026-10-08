@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ecdsa import SECP256k1, VerifyingKey
 
@@ -22,6 +22,7 @@ class TransactionMapper:
             sender=transaction.sender,
             receiver=transaction.receiver,
             amount=transaction.amount,
+            fee=transaction.fee,
             timestamp=timestamp,
             signature=(
                 transaction.signature.hex()
@@ -43,14 +44,29 @@ class TransactionMapper:
     @staticmethod
     def to_domain(model):
 
-        transaction = Transaction(
-            model.sender,
-            model.receiver,
-            float(model.amount)
+        is_mainnet = (
+            getattr(getattr(model, "blockchain", None), "network_id", None)
+            == "novacoin-mainnet-v1"
         )
+        if is_mainnet:
+            transaction = Transaction.atomic(
+                model.sender,
+                model.receiver,
+                int(model.amount),
+                fee=int(getattr(model, "fee", 0) or 0),
+            )
+        else:
+            transaction = Transaction(
+                model.sender,
+                model.receiver,
+                float(model.amount),
+            )
 
         transaction.txid = model.txid
-        transaction.timestamp = model.timestamp.isoformat()
+        timestamp = model.timestamp
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        transaction.timestamp = timestamp.isoformat()
 
         if model.signature:
             transaction.signature = bytes.fromhex(

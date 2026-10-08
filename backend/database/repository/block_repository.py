@@ -30,6 +30,15 @@ class BlockRepository:
         ).scalar_one_or_none()
 
     @staticmethod
+    def get_by_hash_for_blockchain(blockchain_id, block_hash):
+        return db.session.execute(
+            db.select(BlockModel).where(
+                BlockModel.blockchain_id == blockchain_id,
+                BlockModel.hash == block_hash,
+            )
+        ).scalar_one_or_none()
+
+    @staticmethod
     def get_by_height(blockchain_id, height):
 
         return db.session.execute(

@@ -8,6 +8,7 @@ class BlockchainMapper:
         return BlockchainModel(
             name=blockchain.name,
             symbol=blockchain.symbol,
+            network_id=getattr(blockchain, "network_id", None),
             algorithm=blockchain.algorithm,
             difficulty=blockchain.difficulty,
             block_reward=blockchain.mining_reward,

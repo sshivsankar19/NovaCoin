@@ -43,6 +43,12 @@ class TransactionModel(db.Model):
         nullable=False
     )
 
+    fee = db.Column(
+        db.Numeric(38, 0),
+        nullable=False,
+        default=0
+    )
+
     timestamp = db.Column(
         db.DateTime(timezone=True),
         nullable=False
@@ -63,3 +69,5 @@ class TransactionModel(db.Model):
         nullable=False,
         default="pending"
     )
+
+    blockchain = db.relationship("BlockchainModel")

@@ -2,15 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Proof-of-Work mining architecture for the Cryptocurrency Mining and Management System.">
+    <meta name="description" content="Proof-of-Work mining architecture for the NovaCoin Network Console.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h11v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="style.css"><title>Mining | Cryptocurrency Mining &amp; Management System</title>
+    <link rel="stylesheet" href="style.css"><title>Mining | NovaCoin Network Console</title>
   </head>
   <body data-page="mining">
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="Dashboard">
-        <span class="brand-mark" aria-hidden="true">BC</span>
-        <span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span>
+        <span class="brand-mark" aria-hidden="true">NC</span>
+        <span class="brand-copy"><strong>NovaCoin</strong><small>Network Console</small></span>
       </a>
       <button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button>
       <nav id="main-navigation" aria-label="Main navigation">
@@ -61,6 +61,32 @@
       </section>
       <section class="section">
         <div class="section-heading">
+          <div><p class="eyebrow">OPTIONAL EXTERNAL PROOF</p><h2>Hedera Testnet anchor</h2></div>
+          <span class="section-index">04</span>
+        </div>
+        <article class="panel">
+          <p class="muted">This optional action stores a selected real NovaCoin block hash on the configured NovaCoinAnchor contract. It uses MetaMask on Hedera Testnet and does not alter NovaCoin state.</p>
+          <dl class="details">
+            <dt>Network</dt><dd>Hedera Testnet (chain ID 296)</dd>
+            <dt>Contract</dt><dd id="hedera-contract-display">Configured at runtime</dd>
+          </dl>
+          <div class="lookup-form">
+            <label for="hedera-block-select">NovaCoin block</label>
+            <select id="hedera-block-select" disabled><option>Loading real NovaCoin blocks…</option></select>
+          </div>
+          <div id="hedera-selected-block" class="result empty">Select a real block from the NovaCoin chain.</div>
+          <div class="page-actions">
+            <button id="switch-hedera-network" class="secondary-button" type="button" disabled>Switch to Hedera Testnet</button>
+            <button id="anchor-block" type="button" disabled>Anchor Block Hash on Hedera</button>
+            <button id="verify-anchor" class="secondary-button" type="button" disabled>Verify Anchor</button>
+          </div>
+          <div id="hedera-wallet-status" class="result empty">Connect MetaMask to inspect Hedera Testnet readiness.</div>
+          <div id="hedera-anchor-result" class="result empty">Mine a NovaCoin block before anchoring its hash.</div>
+          <div id="hedera-verification-result" class="result empty">No anchor verification performed.</div>
+        </article>
+      </section>
+      <section class="section">
+        <div class="section-heading">
           <div><p class="eyebrow">LATEST CHAIN STATE</p><h2>Proof-of-Work block data</h2></div>
           <span class="section-index">02</span>
         </div>
@@ -71,8 +97,29 @@
       </section>
       <section class="section">
         <div class="section-heading">
-          <div><p class="eyebrow">WORKER OPERATIONS</p><h2>Authenticated mining worker</h2></div>
+          <div><p class="eyebrow">REAL BLOCKCHAIN OPERATION</p><h2>Mine a block</h2></div>
           <span class="section-index">03</span>
+        </div>
+        <div class="mining-grid">
+          <article class="panel">
+            <p class="muted">This calls the real backend <code>POST /mine</code>. Proof-of-Work runs on the backend; the browser does not simulate progress.</p>
+            <form id="mine-form" class="lookup-form">
+              <label for="mine-address">Miner wallet address</label>
+              <input id="mine-address" required placeholder="Generate a wallet first">
+              <button id="mine-button" type="submit">Mine Block</button>
+            </form>
+            <div id="mine-status" class="result empty" aria-live="polite">No mining request made.</div>
+          </article>
+          <article class="panel">
+            <p class="eyebrow">LAST MINED BLOCK</p>
+            <div id="mine-result" class="result empty">No block mined from this page yet.</div>
+          </article>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-heading">
+          <div><p class="eyebrow">WORKER OPERATIONS</p><h2>Authenticated mining worker</h2></div>
+          <span class="section-index">04</span>
         </div>
         <div class="mining-grid">
           <article class="panel">
@@ -93,7 +140,7 @@ python -m miner.worker --api-base-url http://127.0.0.1:5000 \
       <section class="section">
         <div class="section-heading">
           <div><p class="eyebrow">POOL-SCOPED RECORDS</p><h2>Jobs, shares and payouts</h2></div>
-          <span class="section-index">04</span>
+          <span class="section-index">05</span>
         </div>
         <article class="panel">
           <div id="mining-pool-context" class="panel-content empty">No pool context supplied. Open the Pools page to select a pool, then load Mining with <code>?pool_id=&lt;id&gt;</code> to inspect its records.</div>
@@ -108,7 +155,7 @@ python -m miner.worker --api-base-url http://127.0.0.1:5000 \
       <section class="section">
         <div class="section-heading">
           <div><p class="eyebrow">IMPLEMENTATION CONTEXT</p><h2>From transaction to reward</h2></div>
-          <span class="section-index">05</span>
+          <span class="section-index">06</span>
         </div>
         <article class="panel">
           <p class="mining-explanation"><strong>Transaction</strong> enters the mempool → <strong>block data</strong> combines the reward transaction with pending transactions → the worker varies the <strong>nonce</strong> → <strong>SHA-256</strong> produces a candidate hash → the hash must satisfy the configured <strong>difficulty prefix</strong> → a valid block or pool share is submitted → a network-valid pool result records the <strong>block and payout</strong>.</p>
@@ -116,6 +163,9 @@ python -m miner.worker --api-base-url http://127.0.0.1:5000 \
         </article>
       </section>
     </main>
-    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
+    <footer><span>NovaCoin Network Console API</span><span id="api-endpoint"></span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+    <script>window.NOVACOIN_HEDERA_CONTRACT_ADDRESS = window.NOVACOIN_HEDERA_CONTRACT_ADDRESS || "0xc7139b72150c73A4Cbe5823B1C526BA98C1b0a44";</script>
+    <script src="app.js"></script>
   </body>
 </html>

@@ -2,169 +2,147 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Educational blockchain and cryptocurrency mining sandbox.">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h11v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="style.css"><title>Sandbox | Cryptocurrency Mining &amp; Management System</title>
+    <meta name="description" content="Browser-local NovaCoin educational blockchain simulator.">
+    <link rel="stylesheet" href="style.css"><title>Sandbox | NovaCoin Network Console</title>
   </head>
   <body data-page="sandbox">
-    <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">BC</span><span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
+    <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">NC</span><span class="brand-copy"><strong>NovaCoin</strong><small>Network Console</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
     <main>
       <div id="notice" class="notice" role="alert" hidden></div>
-      <section class="page-intro">
-        <p class="eyebrow">EDUCATIONAL ENVIRONMENT</p>
-        <h1>Sandbox / Educational Mode</h1>
-        <p class="muted">No real cryptocurrency is used in this environment. Sandbox activity does not affect the real NovaCoin mining system.</p>
-      </section>
-
-      <section class="section">
-        <div class="sandbox-demo">
-          <article class="panel sandbox-wallet-panel">
-            <p class="eyebrow">SIMULATED WALLET</p>
-            <h2>Your Demo Wallet</h2>
-            <div class="sandbox-balance">
-              <span>Balance</span>
-              <strong id="sandbox-balance">100 NVC</strong>
-            </div>
-            <p class="muted">This sandbox is for teaching the mining flow only. It does not create a real wallet or transfer real cryptocurrency.</p>
-            <button id="sandbox-create-transaction" type="button" onclick="advanceSandbox();">Create demo transaction</button>
-          </article>
-
-          <article class="panel sandbox-flow-panel">
-            <p class="eyebrow">MINING FLOW</p>
-            <h2>Demo progression</h2>
-            <div class="sandbox-flow" aria-live="polite">
-              <div class="sandbox-step active" data-step="wallet">Your Demo Wallet</div>
-              <div class="sandbox-arrow" aria-hidden="true">↓</div>
-              <div class="sandbox-step" data-step="transaction">Create Demo Transaction</div>
-              <div class="sandbox-arrow" aria-hidden="true">↓</div>
-              <div class="sandbox-step" data-step="pending">Pending Transaction</div>
-              <div class="sandbox-arrow" aria-hidden="true">↓</div>
-              <div class="sandbox-step" data-step="mining">Mining Concept</div>
-              <div class="sandbox-arrow" aria-hidden="true">↓</div>
-              <div class="sandbox-step" data-step="block">Proof-of-Work Concept</div>
-              <div class="sandbox-arrow" aria-hidden="true">↓</div>
-              <div class="sandbox-step" data-step="balance">Simulated Balance Update</div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="sandbox-grid">
-          <article class="panel">
-            <p class="eyebrow">REAL BLOCKCHAIN OPERATIONS</p>
-            <h2>Implemented concepts</h2>
-            <ul class="plain-list">
-              <li>Transactions and signatures</li>
-              <li>Mempool validation</li>
-              <li>Blocks and chain validation</li>
-              <li>Proof-of-Work mining</li>
-              <li>Pool jobs, shares and payouts</li>
-            </ul>
-          </article>
-          <article class="panel">
-            <p class="eyebrow">SIMULATED / EDUCATIONAL</p>
-            <h2>Learning boundary</h2>
-            <ul class="plain-list muted">
-              <li>Beginner cryptocurrency concepts</li>
-              <li>Mining and nonce-search explanation</li>
-              <li>Pool accounting interpretation</li>
-              <li>Future Web3 integration concepts</li>
-            </ul>
-            <p class="muted">Interactive functionality is available only where supported by the current backend. Simulated values must not be interpreted as real cryptocurrency.</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="section">
-        <article class="panel">
-          <p class="eyebrow">CURRENT LIMITATIONS</p>
-          <h2>Not exposed through this interface</h2>
-          <p class="muted">Browser mining, private-key storage, wallet creation, transaction signing controls and MetaMask connection are not implemented. The authenticated worker remains a CLI operation.</p>
-        </article>
-      </section>
+      <section class="page-intro"><p class="eyebrow">EDUCATIONAL ENVIRONMENT</p><h1>Sandbox / Educational Mode</h1><p class="muted">Everything on this page is a browser-local simulation. It never writes to the real NovaCoin blockchain, mempool, wallet, or database.</p></section>
+      <section class="section"><div class="sandbox-demo">
+        <article class="panel sandbox-wallet-panel"><p class="eyebrow">SIMULATED WALLET</p><h2>Sandbox Wallet</h2><div class="sandbox-balance"><span>Simulated balance</span><strong id="sandbox-balance">100.00 NVC</strong></div><dl class="details"><dt>Wallet address</dt><dd>SANDBOX-NVC-001</dd><dt>Transactions</dt><dd id="sandbox-transaction-count">0</dd><dt>Confirmed blocks</dt><dd id="sandbox-block-count">0</dd></dl><p class="muted">This is not a real NovaCoin wallet. State exists only in this browser tab.</p></article>
+        <article class="panel sandbox-flow-panel"><p class="eyebrow">SIMULATOR STATUS</p><h2 id="sandbox-status-title">Ready for a simulated transaction</h2><p id="sandbox-status-description" class="muted">Create a transaction, place it in the simulated mempool, then assemble, mine, broadcast, and confirm a simulated block.</p><div class="sandbox-flow" aria-label="Simulated mining flow"><span class="sandbox-step active">Wallet</span><b aria-hidden="true">↓</b><span class="sandbox-step">Transaction</span><b aria-hidden="true">↓</b><span class="sandbox-step">Mempool</span><b aria-hidden="true">↓</b><span class="sandbox-step">Block Assembly</span><b aria-hidden="true">↓</b><span class="sandbox-step">Mining</span><b aria-hidden="true">↓</b><span class="sandbox-step">Block Broadcast</span><b aria-hidden="true">↓</b><span class="sandbox-step">Confirmation</span></div></article>
+      </div></section>
+      <section class="section"><div class="sandbox-grid">
+        <article class="panel"><p class="eyebrow">1 · TRANSACTION</p><h2>Create simulated transaction</h2><form id="sandbox-transaction-form" class="lookup-form"><label for="sandbox-receiver">Receiver</label><input id="sandbox-receiver" required placeholder="e.g. learner-wallet"><label for="sandbox-amount">Amount (NVC)</label><input id="sandbox-amount" type="number" min="0.01" step="0.01" required placeholder="5"><button type="submit">Create Simulated Transaction</button></form><p class="muted">Available balance: <strong id="sandbox-available-balance">100.00 NVC</strong></p></article>
+        <article class="panel"><p class="eyebrow">2 · SIMULATED MEMPOOL</p><h2>Pending transactions</h2><div id="sandbox-mempool" class="result empty">No simulated transactions are waiting.</div></article>
+      </div></section>
+      <section class="section"><div class="sandbox-grid">
+        <article class="panel"><p class="eyebrow">4 · PROOF OF WORK</p><h2>Simulated mining</h2><dl id="sandbox-mining-details" class="details"><dt>Mining status</dt><dd>READY</dd><dt>Block height</dt><dd>Not started</dd><dt>Previous hash</dt><dd>Not started</dd><dt>Difficulty</dt><dd>3 (prefix 000)</dd><dt>Nonce</dt><dd>Not started</dd><dt>Current hash</dt><dd>Not started</dd><dt>Attempts</dt><dd>0</dd></dl><div class="page-actions"><button id="sandbox-start-mining" type="button">Start Simulated Mining</button><button id="sandbox-confirm-block" class="secondary-button" type="button" disabled>Confirm Simulated Block</button><button id="sandbox-reset" class="secondary-button" type="button">Reset Sandbox</button></div></article>
+        <article class="panel"><p class="eyebrow">3 · CANDIDATE BLOCK</p><h2 id="sandbox-block-title">No block found</h2><div id="sandbox-block-result" class="result empty">Assemble a candidate block from pending simulated transactions.</div></article>
+      </div></section>
+      <section class="section"><div class="sandbox-grid">
+        <article class="panel"><p class="eyebrow">5 · LEDGER</p><h2>Simulated transactions</h2><div id="sandbox-transactions" class="result empty">No simulated transactions yet.</div></article>
+        <article class="panel"><p class="eyebrow">EDUCATIONAL NOTES</p><h2>What is happening?</h2><ul class="plain-list muted"><li><strong>Transaction:</strong> waits to be included in a block.</li><li><strong>Mempool:</strong> holds pending simulated transactions.</li><li><strong>Proof of Work:</strong> the nonce changes until the hash meets the target.</li><li><strong>Difficulty:</strong> 3 means the hash begins with three zero characters.</li><li><strong>Reward:</strong> confirmation adds 10 NVC after the transaction amount is accounted for.</li></ul></article>
+      </div></section>
     </main>
-    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer>
+    <footer><span>NovaCoin Network Console API</span><span id="api-endpoint"></span></footer>
     <script>
-      function advanceSandbox() {
-        const button = document.getElementById('sandbox-create-transaction');
-        const notice = document.getElementById('notice');
-        const steps = [...document.querySelectorAll('.sandbox-step')];
-        const balanceElement = document.getElementById('sandbox-balance');
-        let stage = Number(button.dataset.stage || 0);
-        let balance = Number(button.dataset.balance || 100);
-
-        if (stage === 0) {
-          stage = 1;
-          button.dataset.stage = String(stage);
-          button.dataset.balance = String(balance);
-          steps.forEach((step, index) => {
-            step.classList.toggle('active', index === 1);
-            step.classList.toggle('complete', index < 1);
-          });
-          notice.textContent = 'Simulated demo transaction created. This does not create a real transaction or real mempool entry.';
-          notice.hidden = false;
-          return;
+      (() => {
+        const INITIAL_BALANCE = 100, REWARD = 10, DIFFICULTY = 3, SENDER = 'SANDBOX-NVC-001';
+        const state = { balance: INITIAL_BALANCE, transactions: [], blocks: [], mempool: [], candidate: null, mining: false, miningRun: 0 };
+        const $ = (id) => document.getElementById(id);
+        const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+        const amount = (value) => Number(value).toFixed(2);
+        const shortHash = (value) => value ? `${value.slice(0, 16)}…${value.slice(-12)}` : 'Not available';
+        const canonical = (value) => JSON.stringify(value);
+        const available = () => state.balance - state.mempool.reduce((sum, tx) => sum + tx.amount, 0);
+        async function sha256(value) {
+          const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+          return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
         }
-        if (stage === 1) {
-          stage = 2;
-          button.dataset.stage = String(stage);
-          steps.forEach((step, index) => {
-            step.classList.toggle('active', index === 2);
-            step.classList.toggle('complete', index < 2);
-          });
-          notice.textContent = 'Pending transaction is shown only as a teaching step. No real transaction is submitted to the production system.';
-          notice.hidden = false;
-          return;
+        function notice(message, error = true) {
+          $('notice').textContent = message; $('notice').hidden = !message;
+          $('notice').style.borderLeftColor = error ? 'var(--red)' : 'var(--green)';
         }
-        if (stage === 2) {
-          stage = 3;
-          button.dataset.stage = String(stage);
-          steps.forEach((step, index) => {
-            step.classList.toggle('active', index === 3);
-            step.classList.toggle('complete', index < 3);
-          });
-          notice.textContent = 'Mining concept: the worker changes the nonce until the hash satisfies the target. This is educational only.';
-          notice.hidden = false;
-          return;
+        function flow(step) {
+          document.querySelectorAll('.sandbox-step').forEach((element, index) => { element.classList.toggle('active', index === step); element.classList.toggle('complete', index < step); });
         }
-        if (stage === 3) {
-          stage = 4;
-          balance = 75;
-          button.dataset.stage = String(stage);
-          button.dataset.balance = String(balance);
-          balanceElement.textContent = `${balance} NVC`;
-          steps.forEach((step, index) => {
-            step.classList.toggle('active', index === 4);
-            step.classList.toggle('complete', index < 4);
-          });
-          notice.textContent = 'Simulated confirmation: this flow represents a valid block concept, not a real blockchain mutation.';
-          notice.hidden = false;
-          return;
+        function render() {
+          $('sandbox-balance').textContent = `${amount(state.balance)} NVC`;
+          $('sandbox-available-balance').textContent = `${amount(available())} NVC`;
+          $('sandbox-transaction-count').textContent = state.transactions.length;
+          $('sandbox-block-count').textContent = state.blocks.length;
+          const c = state.candidate;
+          const details = [['Mining status', state.mining ? 'SEARCHING' : c ? c.status : 'READY'], ['Block height', c?.index ?? 'Not started'], ['Previous hash', c ? shortHash(c.previous_hash) : 'Not started'], ['Difficulty', `3 (prefix ${'0'.repeat(DIFFICULTY)})`], ['Nonce', c?.nonce ?? 'Not started'], ['Current hash', c ? shortHash(c.hash) : 'Not started'], ['Attempts', c?.attempts ?? 0]];
+          $('sandbox-mining-details').innerHTML = details.map(([label, value]) => `<dt>${label}</dt><dd>${esc(value)}</dd>`).join('');
+          $('sandbox-mempool').className = state.mempool.length ? 'result' : 'result empty';
+          $('sandbox-mempool').innerHTML = state.mempool.length ? state.mempool.map((tx) => `<article class="sandbox-record"><strong>${esc(tx.txid.slice(0, 18))}…</strong><span>${esc(tx.sender)} → ${esc(tx.receiver)}</span><span>${amount(tx.amount)} NVC · ${tx.status}</span></article>`).join('') : 'No simulated transactions are waiting.';
+          $('sandbox-transactions').className = state.transactions.length ? 'result' : 'result empty';
+          $('sandbox-transactions').innerHTML = state.transactions.length ? `<div class="table-wrap"><table><thead><tr><th>TXID</th><th>Receiver</th><th>Amount</th><th>Status</th></tr></thead><tbody>${state.transactions.map((tx) => `<tr><td><code title="${esc(tx.txid)}">${esc(shortHash(tx.txid))}</code></td><td>${esc(tx.receiver)}</td><td>${amount(tx.amount)} NVC</td><td>${tx.status}</td></tr>`).join('')}</tbody></table></div>` : 'No simulated transactions yet.';
+          $('sandbox-block-title').textContent = c ? `${c.status} simulated block` : 'No block found';
+          $('sandbox-block-result').className = c ? 'result' : 'result empty';
+          $('sandbox-block-result').innerHTML = c ? `<dl class="details"><dt>State</dt><dd><strong>${esc(c.status)}</strong></dd><dt>Block index</dt><dd>${c.index}</dd><dt>Nonce</dt><dd>${c.nonce}</dd><dt>Hash</dt><dd><code>${esc(c.hash || 'Searching...')}</code></dd><dt>Previous hash</dt><dd><code>${esc(c.previous_hash)}</code></dd><dt>Difficulty</dt><dd>${DIFFICULTY} (prefix ${'0'.repeat(DIFFICULTY)})</dd><dt>Transactions selected</dt><dd>${c.transactions.length}</dd></dl><p class="eyebrow candidate-transactions-label">ASSEMBLED TRANSACTIONS</p><div class="candidate-transactions">${c.transactions.map((tx) => `<span><code>${esc(shortHash(tx.txid))}</code> · ${amount(tx.amount)} NVC · ${esc(tx.status)}</span>`).join('')}</div>` : 'Assemble a candidate block from pending simulated transactions.';
+          $('sandbox-start-mining').disabled = state.mining || !state.mempool.length || Boolean(c && !c.confirmed);
+          $('sandbox-confirm-block').disabled = !c || c.status !== 'BROADCASTED' || state.mining;
         }
-        if (stage === 4) {
-          stage = 5;
-          button.dataset.stage = String(stage);
-          steps.forEach((step, index) => {
-            step.classList.toggle('active', index === 5);
-            step.classList.toggle('complete', index < 5);
-          });
-          notice.textContent = 'Sandbox complete: simulated balance update only. No real wallet, blockchain, payout, or mining state changes are made.';
-          notice.hidden = false;
+        async function createTransaction(event) {
+          event.preventDefault();
+          const receiver = $('sandbox-receiver').value.trim(), value = Number($('sandbox-amount').value);
+          if (!receiver) return notice('Receiver is required.');
+          if (!Number.isFinite(value) || value <= 0) return notice('Amount must be a positive number.');
+          if (value > available()) return notice('Amount exceeds the available simulated balance.');
+          const data = { sender: SENDER, receiver, amount: Number(value.toFixed(2)), timestamp: new Date().toISOString() };
+          const tx = { ...data, txid: await sha256(canonical(data)), status: 'PENDING' };
+          state.transactions.push(tx); state.mempool.push(tx); $('sandbox-transaction-form').reset();
+          $('sandbox-status-title').textContent = 'Transaction waiting in simulated mempool';
+          $('sandbox-status-description').textContent = 'Pending transactions wait here before block assembly.';
+          flow(2); notice('Simulated transaction created locally. No backend request was made.', false); render();
         }
-      }
-
-      window.addEventListener('DOMContentLoaded', () => {
-        const balanceElement = document.getElementById('sandbox-balance');
-        if (balanceElement) {
-          balanceElement.textContent = '100 NVC';
+        async function mine() {
+          if (state.mining) return;
+          if (!state.mempool.length) return notice('Create at least one simulated transaction before mining.');
+          state.mining = true;
+          const run = ++state.miningRun;
+          state.candidate = { index: state.blocks.length + 1, previous_hash: state.blocks.at(-1)?.hash || '0', transactions: [...state.mempool], nonce: 0, hash: '', attempts: 0, status: 'CANDIDATE' };
+          const c = state.candidate, base = { index: c.index, previous_hash: c.previous_hash, transactions: c.transactions, difficulty: DIFFICULTY };
+          $('sandbox-status-title').textContent = 'Assembling candidate block...';
+          $('sandbox-status-description').textContent = `${c.transactions.length} transaction${c.transactions.length === 1 ? '' : 's'} selected · Block #${c.index} candidate created.`;
+          flow(3); render();
+          await new Promise((resolve) => setTimeout(resolve, 350));
+          if (state.miningRun !== run) return;
+          c.status = 'MINING';
+          $('sandbox-status-title').textContent = `Mining block #${c.index}...`;
+          $('sandbox-status-description').textContent = 'Searching nonce and calculating SHA-256 hashes locally.';
+          flow(4); render();
+          while (state.mining && state.miningRun === run && c.nonce < 1000000) {
+            c.hash = await sha256(`${canonical(base)}:${c.nonce}`); c.attempts += 1;
+            if (c.hash.startsWith('0'.repeat(DIFFICULTY))) break;
+            c.nonce += 1;
+            if (c.attempts % 50 === 0) { render(); await new Promise((resolve) => setTimeout(resolve, 0)); }
+          }
+          if (state.miningRun !== run) return;
+          state.mining = false;
+          if (!c.hash.startsWith('0'.repeat(DIFFICULTY))) return notice('The simulator reached its nonce limit without finding a block.');
+          c.status = 'MINED';
+          c.transactions.forEach((tx) => { tx.status = 'MINED'; });
+          $('sandbox-status-title').textContent = 'Valid hash found';
+          $('sandbox-status-description').textContent = `Valid Proof-of-Work found · nonce ${c.nonce} · ${c.attempts.toLocaleString()} hash attempts.`;
+          flow(5); notice('Simulated block mined. Broadcasting it locally before confirmation.', false); render();
+          await new Promise((resolve) => setTimeout(resolve, 450));
+          if (state.miningRun !== run) return;
+          c.status = 'BROADCASTING';
+          $('sandbox-status-title').textContent = `Broadcasting block #${c.index}...`;
+          $('sandbox-status-description').textContent = `Block hash: ${shortHash(c.hash)} · Sending block to simulated network nodes.`;
+          flow(6); render();
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          if (state.miningRun !== run) return;
+          c.status = 'BROADCASTED';
+          $('sandbox-status-title').textContent = 'Block received by simulated network';
+          $('sandbox-status-description').textContent = 'The locally simulated block is ready for confirmation.';
+          flow(6); notice('Simulated block broadcast complete. Confirm it to update the simulated ledger.', false); render();
         }
-        const steps = [...document.querySelectorAll('.sandbox-step')];
-        steps.forEach((step, index) => {
-          step.classList.toggle('active', index === 0);
-          step.classList.toggle('complete', false);
-        });
-      });
+        function confirmBlock() {
+          const c = state.candidate; if (!c || c.confirmed) return;
+          state.balance = state.balance - c.transactions.reduce((sum, tx) => sum + tx.amount, 0) + REWARD;
+          c.transactions.forEach((tx) => { tx.status = 'CONFIRMED'; }); c.confirmed = true; c.status = 'CONFIRMED'; state.blocks.push(c); state.mempool = [];
+          $('sandbox-status-title').textContent = 'Block confirmed';
+          $('sandbox-status-description').textContent = `The block is confirmed locally and the ${REWARD} NVC simulated mining reward was added.`;
+          flow(6); notice(`Block #${c.index} added to the simulated chain. Real NovaCoin state was not changed.`, false); render();
+        }
+        function reset() {
+          state.balance = INITIAL_BALANCE; state.transactions = []; state.blocks = []; state.mempool = []; state.candidate = null; state.mining = false; state.miningRun += 1;
+          $('sandbox-status-title').textContent = 'Ready for a simulated transaction';
+          $('sandbox-status-description').textContent = 'Create a transaction, place it in the simulated mempool, then assemble, mine, broadcast, and confirm a simulated block.';
+          $('sandbox-transaction-form').reset(); flow(0); notice('Sandbox reset. Only browser-local simulation state was cleared.', false); render();
+        }
+        $('sandbox-transaction-form').addEventListener('submit', createTransaction);
+        $('sandbox-start-mining').addEventListener('click', mine);
+        $('sandbox-confirm-block').addEventListener('click', confirmBlock);
+        $('sandbox-reset').addEventListener('click', reset);
+        render();
+      })();
     </script>
     <script src="app.js"></script>
   </body>

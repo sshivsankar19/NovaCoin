@@ -2,17 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Read-only wallet balance lookup for the Cryptocurrency Mining and Management System.">
+    <meta name="description" content="NovaCoin development wallet creation and balance lookup.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2311161c'/%3E%3Cpath d='M7 6h18v4H11v4h11v4H11v4h14v4H7z' fill='%2395b8d8'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="style.css"><title>Wallet | Cryptocurrency Mining &amp; Management System</title>
+    <link rel="stylesheet" href="style.css"><title>Wallet | NovaCoin Network Console</title>
   </head>
   <body data-page="wallet">
-    <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">BC</span><span class="brand-copy"><strong>Cryptocurrency Mining</strong><small>&amp; Management System</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
+    <header class="site-header"><a class="brand" href="index.html" aria-label="Dashboard"><span class="brand-mark" aria-hidden="true">NC</span><span class="brand-copy"><strong>NovaCoin</strong><small>Network Console</small></span></a><button class="menu-button" id="menu-button" type="button" aria-expanded="false" aria-controls="main-navigation">Menu</button><nav id="main-navigation" aria-label="Main navigation"><a data-page-link="dashboard" href="index.html">Dashboard</a><a data-page-link="blockchain" href="blockchain.html">Blockchain</a><a data-page-link="mining" href="mining.html">Mining</a><a data-page-link="pools" href="pools.html">Pools</a><a data-page-link="transactions" href="transactions.html">Transactions</a><a data-page-link="wallet" href="wallet.html">Wallet</a><a data-page-link="sandbox" href="sandbox.html">Sandbox</a></nav><div class="connection-state" aria-live="polite"><span id="health-indicator" aria-hidden="true"></span><span id="health-label">Checking API</span></div></header>
     <main>
-      <section class="page-intro"><p class="eyebrow">ADDRESS VIEW</p><h1>Wallet</h1><p class="muted">Read-only balance lookup using the current blockchain API.</p></section>
+      <section class="page-intro"><p class="eyebrow">WALLET OPERATIONS</p><h1>Wallet</h1><p class="muted">Create a backend-managed development wallet or look up the real chain balance for an address.</p></section>
       <div id="notice" class="notice" role="alert" hidden></div>
-      <section class="section"><article class="panel wallet-panel"><p class="eyebrow">WALLET LOOKUP</p><h2>Check an address</h2><form id="wallet-form" class="lookup-form"><label for="wallet-address">Wallet address</label><input id="wallet-address" placeholder="Enter an address" autocomplete="off"><button type="submit">Check balance</button></form><div id="wallet-result" class="result empty">No wallet selected.</div><p class="muted">The API returns the address and calculated balance. Private keys, wallet creation and MetaMask/Web3 are not exposed here.</p></article></section>
+      <section class="section"><div class="lookup-grid">
+        <article class="panel wallet-panel"><p class="eyebrow">CREATE NOVACOIN WALLET</p><h2>Development wallet</h2><p class="muted">The backend creates and holds the signing key in its current process. This is not production key management.</p><button id="create-wallet" type="button">Generate Wallet</button><div id="wallet-create-result" class="result empty">No development wallet created.</div></article>
+        <article class="panel wallet-panel"><p class="eyebrow">BALANCE LOOKUP</p><h2>Check an address</h2><form id="wallet-form" class="lookup-form"><label for="wallet-address">Wallet address</label><input id="wallet-address" placeholder="Enter an address" autocomplete="off"><button type="submit">Check balance</button></form><div id="wallet-result" class="result empty">No wallet selected.</div><p class="muted">Balance is calculated from the real backend chain state.</p></article>
+      </div></section>
+      <section class="section"><article class="panel wallet-panel">
+       <p class="eyebrow">WEB3 / METAMASK</p>
+       <h2>Optional EVM wallet</h2>
+       <p class="muted">MetaMask is separate from the native NovaCoin wallet. This page only requests account access and signs a non-broadcast test message.</p>
+       <button id="connect-metamask" type="button">Connect MetaMask</button>
+       <p id="web3-status" class="status-label" aria-live="polite">Checking for MetaMask…</p>
+       <div id="web3-wallet-result" class="result empty">No MetaMask account connected.</div>
+       <button id="switch-hedera-network" class="secondary-button" type="button" disabled>Switch to Hedera Testnet</button>
+       <div id="hedera-wallet-status" class="result empty">Hedera Testnet status is unavailable until MetaMask is connected.</div>
+       <button id="sign-web3-message" type="button" disabled>Sign Web3 Test Message</button>
+       <p id="web3-signature-result" class="status-label" aria-live="polite"></p>
+       <p class="muted">The EVM address is not a NovaCoin address, has no NVC balance here, and cannot sign native NovaCoin transactions.</p>
+      </article></section>
     </main>
-    <footer><span>Blockchain Crypto Miner API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
+    <footer><span>NovaCoin Network Console API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
   </body>
 </html>

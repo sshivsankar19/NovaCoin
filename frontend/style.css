@@ -519,6 +519,29 @@ input::placeholder {
   color: var(--text);
 }
 
+.candidate-transactions-label {
+  border-top: 1px solid var(--border);
+  margin: 18px 0 9px;
+  padding-top: 14px;
+}
+
+.candidate-transactions {
+  display: grid;
+  gap: 7px;
+}
+
+.candidate-transactions span {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.candidate-transactions code {
+  color: var(--text);
+}
+
 .sandbox-arrow {
   color: var(--muted);
   font-size: 16px;
@@ -989,4 +1012,172 @@ footer {
     flex-direction: column;
     gap: 7px;
   }
+}
+
+/* NovaCoin Network Console */
+:root {
+  --background: #0b0d10;
+  --surface: #111419;
+  --surface-raised: #171b21;
+  --surface-highlight: #1d232b;
+  --border: #252b33;
+  --border-strong: #39424d;
+  --text: #e8eaed;
+  --muted: #9aa3ae;
+  --blue: #7c8cff;
+  --green: #35c759;
+  --red: #ff5f56;
+  --amber: #f5b942;
+  --max-width: none;
+}
+
+html { background: var(--background); }
+
+body {
+  background:
+    linear-gradient(90deg, rgba(124, 140, 255, .025) 1px, transparent 1px) 0 0 / 40px 40px,
+    var(--background);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body::before {
+  background: var(--border);
+  content: "";
+  height: 100vh;
+  left: 255px;
+  opacity: .35;
+  position: fixed;
+  top: 0;
+  width: 1px;
+  z-index: 20;
+}
+
+.site-header {
+  align-items: stretch;
+  background: #0e1014;
+  border-bottom: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  height: 100vh;
+  left: 0;
+  min-height: 0;
+  padding: 26px 18px 20px;
+  position: fixed;
+  top: 0;
+  width: 255px;
+  z-index: 30;
+}
+
+.brand { align-items: flex-start; gap: 12px; padding: 0 8px 22px; }
+.brand-mark { border-color: var(--blue); color: var(--blue); font-size: 10px; letter-spacing: .16em; padding: 6px 5px; }
+.brand-copy strong { font-size: 0; letter-spacing: .08em; text-transform: uppercase; }
+.brand-copy strong::after { content: "NovaCoin"; font-size: 14px; }
+.brand-copy small { font-size: 0; letter-spacing: .1em; text-transform: uppercase; }
+.brand-copy small::after { content: "Network Console"; font-size: 10px; }
+
+nav { display: flex; flex: 0 0 auto; flex-direction: column; gap: 3px; }
+nav::before { color: #68717d; content: "NETWORK CONSOLE"; font-size: 10px; letter-spacing: .14em; margin: 0 10px 10px; }
+nav a { border: 1px solid transparent; border-left: 2px solid transparent; font-size: 12px; padding: 10px; }
+nav a:hover, nav a:focus-visible, nav a.active {
+  background: rgba(124, 140, 255, .08);
+  border-bottom-color: transparent;
+  border-left-color: var(--blue);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.connection-state { border-top: 1px solid var(--border); font-size: 11px; margin-top: auto; padding: 18px 8px 0; }
+main { margin-left: 255px; max-width: none; padding: 42px clamp(26px, 5vw, 72px) 76px; }
+footer { margin-left: 255px; padding-left: clamp(26px, 5vw, 72px); }
+.page-intro { border-bottom-color: var(--border); margin-bottom: 34px; padding-bottom: 28px; }
+.page-intro h1 { font-size: clamp(28px, 3vw, 42px); font-weight: 620; letter-spacing: -.04em; }
+.eyebrow { color: #77818d; font-weight: 650; letter-spacing: .16em; }
+h2 { font-size: 20px; font-weight: 590; }
+h3 { font-size: 14px; font-weight: 650; letter-spacing: .01em; }
+.section { border-top-color: var(--border); margin-top: 44px; padding-top: 23px; }
+.section-heading { margin-bottom: 18px; }
+.section-index { color: #66707b; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; }
+
+.panel, .directory-panel, .pool-control-bar {
+  background: rgba(17, 20, 25, .92);
+  border-color: var(--border);
+  border-radius: 3px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
+}
+.panel { padding: 20px; }
+.metric-grid { background: var(--border); border-color: var(--border); gap: 1px; }
+.metric { background: var(--surface); border-right: 0; padding: 16px; }
+.metric-value, code, .hash, table td:first-child {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.metric-value { color: var(--text); font-size: 17px; }
+input, select { background: #0d1014; border-color: var(--border-strong); border-radius: 3px; }
+input:focus, select:focus { border-color: var(--blue); }
+button {
+  background: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: 3px;
+  color: #0b0d10;
+  font-size: 12px;
+  letter-spacing: .02em;
+  padding: 9px 13px;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+button:hover { background: #aab2ff; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+.secondary-button, .text-button { background: transparent; border-color: var(--border-strong); color: var(--muted); }
+.secondary-button:hover, .text-button:hover { background: var(--surface-highlight); color: var(--text); text-decoration: none; }
+.notice { background: rgba(255, 95, 86, .08); border-left-color: var(--red); border-radius: 2px; }
+.summary-strip { background: var(--surface); border-color: var(--border); border-radius: 3px; }
+table { background: var(--surface); border-color: var(--border); }
+th { background: #15191f; color: #7f8995; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+th, td { border-bottom-color: var(--border); padding: 12px 13px; }
+tbody tr:hover { background: rgba(124, 140, 255, .045); }
+.badge { border-radius: 2px; font-size: 10px; letter-spacing: .06em; padding: 3px 6px; text-transform: uppercase; }
+.code-block, pre, .command-block { background: #0b0d10; border-color: var(--border); border-radius: 3px; color: #b9c1cc; }
+
+body[data-page="sandbox"] .page-intro::after {
+  color: var(--amber);
+  content: "SIMULATION ONLY · NO NOVACOIN STATE MODIFIED";
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  body::before { display: none; }
+  .site-header {
+    border-bottom: 1px solid var(--border);
+    border-right: 0;
+    height: auto;
+    min-height: 64px;
+    padding: 12px 18px;
+    position: sticky;
+    width: 100%;
+  }
+  .brand { padding: 0; }
+  .menu-button { display: block; margin-left: auto; }
+  nav { display: none; width: 100%; }
+  nav.open { display: flex; }
+  .connection-state { border-top: 0; margin: 0; padding: 0; position: absolute; right: 84px; top: 23px; }
+  main, footer { margin-left: 0; }
+  main { padding: 32px 22px 60px; }
+  footer { padding-left: 22px; }
+}
+
+@media (max-width: 600px) {
+  .connection-state { display: none; }
+  .page-intro h1 { font-size: 30px; }
+  .dashboard-grid, .mining-grid, .monitoring-grid, .lookup-grid, .sandbox-demo, .sandbox-grid { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .section-heading, .table-heading, .pool-control-bar { align-items: flex-start; flex-direction: column; }
+  .pool-control-bar { gap: 12px; }
+  .inline-form, .lookup-form, .create-pool-form { align-items: stretch; flex-direction: column; width: 100%; }
+  .inline-form input, .lookup-form input, .create-pool-form input, .lookup-form button, .inline-form button { min-width: 0; width: 100%; }
+  .table-wrap { overflow-x: auto; }
 }

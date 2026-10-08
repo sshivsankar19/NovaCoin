@@ -608,15 +608,15 @@ def create_pool_blueprint(blockchain):
                     for miner in miners
                 ),
                 "total_shares": sum(
-                    miner.total_shares
+                    miner.total_shares or 0
                     for miner in miners
                 ),
                 "accepted_shares": sum(
-                    miner.accepted_shares
+                    miner.accepted_shares or 0
                     for miner in miners
                 ),
                 "rejected_shares": sum(
-                    miner.rejected_shares
+                    miner.rejected_shares or 0
                     for miner in miners
                 ),
                 "acceptance_rate": (

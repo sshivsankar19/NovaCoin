@@ -6,6 +6,8 @@ safe to run in development, CI, and production without code changes.
 
 import os
 
+from blockchain.protocol import NETWORK_ID
+
 
 def _positive_float(name, default, minimum=0.0):
     try:
@@ -25,6 +27,19 @@ def _positive_int(name, default, minimum=1):
 
 class Settings:
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
+    FLASK_HOST = os.getenv("FLASK_HOST", "127.0.0.1")
+    FLASK_PORT = _positive_int("FLASK_PORT", 5000)
+    FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() in {
+        "1", "true", "yes"
+    }
+    CORS_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5500,http://127.0.0.1:5500",
+        ).split(",")
+        if origin.strip()
+    ]
     WORKER_POLL_INTERVAL = _positive_float("MINER_POLL_INTERVAL", 1.0)
     WORKER_HEARTBEAT_INTERVAL = _positive_float(
         "MINER_HEARTBEAT_INTERVAL", 15.0
@@ -43,6 +58,40 @@ class Settings:
     POOL_INACTIVITY_SECONDS = _positive_float(
         "POOL_INACTIVITY_SECONDS", 120, 1
     )
+    P2P_ENABLED = os.getenv("P2P_ENABLED", "false").lower() in {
+        "1", "true", "yes"
+    }
+    P2P_HOST = os.getenv("P2P_HOST", "127.0.0.1")
+    P2P_PORT = _positive_int("P2P_PORT", 18444, 1)
+    P2P_ADVERTISED_HOST = os.getenv("P2P_ADVERTISED_HOST", P2P_HOST)
+    P2P_ADVERTISED_PORT = _positive_int(
+        "P2P_ADVERTISED_PORT",
+        P2P_PORT,
+        1,
+    )
+    P2P_MAX_PEERS = _positive_int("P2P_MAX_PEERS", 32, 1)
+    P2P_MAX_INBOUND_PEERS = _positive_int("P2P_MAX_INBOUND_PEERS", 24, 0)
+    P2P_MAX_OUTBOUND_PEERS = _positive_int("P2P_MAX_OUTBOUND_PEERS", 8, 0)
+    P2P_MAX_CONNECTION_ATTEMPTS = _positive_int(
+        "P2P_MAX_CONNECTION_ATTEMPTS", 8, 1
+    )
+    P2P_IDLE_TIMEOUT_SECONDS = _positive_float(
+        "P2P_IDLE_TIMEOUT_SECONDS", 120, 1
+    )
+    P2P_RATE_LIMIT_PER_MINUTE = _positive_int(
+        "P2P_RATE_LIMIT_PER_MINUTE", 120, 1
+    )
+    P2P_MAX_ORPHANS = _positive_int("P2P_MAX_ORPHANS", 256, 1)
+    P2P_ORPHAN_TTL_SECONDS = _positive_float(
+        "P2P_ORPHAN_TTL_SECONDS", 300, 1
+    )
+    P2P_NODE_ID_PATH = os.getenv("P2P_NODE_ID_PATH", ".novacoin/node.json")
+    P2P_NETWORK_ID = os.getenv("P2P_NETWORK_ID", NETWORK_ID)
+    P2P_BOOTSTRAP_PEERS = [
+        peer.strip()
+        for peer in os.getenv("P2P_BOOTSTRAP_PEERS", "").split(",")
+        if peer.strip()
+    ]
 
 
 def get_settings():

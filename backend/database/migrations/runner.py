@@ -88,7 +88,11 @@ def _apply_migrations(connection, migrations, applied):
             try:
                 # Migration files are PostgreSQL scripts and may contain
                 # multiple statements/DO blocks; do not split on semicolons.
-                connection.exec_driver_sql(sql)
+                # psycopg treats percent signs as parameter markers even
+                # when SQLAlchemy is executing a statement without values.
+                # Escape PostgreSQL format() placeholders so they reach the
+                # server unchanged.
+                connection.exec_driver_sql(sql.replace("%I", "%%I"))
                 connection.execute(
                     text(
                         "INSERT INTO schema_migrations (version) "

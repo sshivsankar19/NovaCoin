@@ -1,391 +1,406 @@
+# NovaCoin (NVC)
 # Blockchain Crypto Miner
 
-A blockchain-based cryptocurrency mining and management system built with Python.
+NovaCoin is a custom educational and simulated cryptocurrency network. It
+implements a deterministic blockchain, signed transactions, SHA-256
+Proof-of-Work, durable PostgreSQL/Neon persistence, a TCP peer-to-peer
+network, a mining-pool foundation, and a dependency-free browser frontend.
+It is a student project and has no real monetary value.
 
-The project implements a custom Proof-of-Work blockchain with wallets, digitally signed transactions, transaction validation, a mempool, persistent cloud-backed storage, and a mining pool foundation.
+## Technology
 
-## Current Features
+- Python
+- Flask and Flask-CORS
+- SQLAlchemy with PostgreSQL/Neon support
+- ECDSA secp256k1 wallets and transaction signatures
+- SHA-256 Proof-of-Work
+- TCP-based P2P networking with newline-delimited JSON messages
+- Optional Hedera Testnet/Web3 integration
+- Dependency-free HTML, CSS, and JavaScript frontend
 
-### Blockchain
+## Mainnet Protocol
 
-- Custom blockchain implementation
-- Genesis block creation
-- Block linking using previous block hashes
-- SHA-256 block hashing
-- Proof-of-Work mining
-- Configurable mining difficulty
-- Configurable mining rewards
-- Chain validation
-- Persistent blockchain state
-- Blockchain recovery after application restart
+The implemented canonical protocol is:
 
-### Wallets
+| Parameter | Value |
+|---|---|
+| Network name | `NOVACOIN-MAINNET` |
+| Network ID | `novacoin-mainnet-v1` |
+| Currency | `NVC` |
+| Atomic units | `100,000,000` per NVC |
+| Hashing / PoW | SHA-256 Proof-of-Work |
+| Initial difficulty | `3` |
+| Target block interval | `30` seconds |
+| Initial subsidy | `10 NVC` |
+| Halving interval | Every `100` blocks |
+| Difficulty adjustment | Every `10` blocks |
+| Protocol version | `1` |
+| Genesis timestamp | `2026-01-01T00:00:00+00:00` |
+| Genesis hash | `4b2912db207f531097fd0ca8728405bb5350a4ff4b89d343893403fb4fcb0262` |
 
-- ECDSA secp256k1 key generation
-- Public/private key pairs
-- Wallet address generation using SHA-256 followed by BLAKE2b-256
-- Wallet balance calculation
-- REST API wallet creation
+These values are defined in
+[`backend/blockchain/protocol.py`](backend/blockchain/protocol.py). Legacy
+BCM/NVC data is kept outside the `novacoin-mainnet-v1` database namespace.
 
-Private keys are not stored in PostgreSQL.
+## Blockchain and Consensus
 
-### Transactions
+Implemented blockchain functionality includes:
 
-- Transaction creation
-- Transaction IDs
-- ECDSA digital signatures
-- Signature verification
-- Transaction validation
-- Insufficient-balance protection
-- Sender/receiver validation
-- Protection against modifying signed transactions
-- Persistent transaction storage
-- Transaction recovery after restart
+- Deterministic block and transaction serialization.
+- SHA-256 block hashing and Proof-of-Work mining.
+- ECDSA secp256k1 signatures and transaction IDs.
+- Atomic-unit money handling and transaction fees.
+- Transaction validation, balance checks, signature checks, and coinbase
+  rules.
+- A deterministic mempool with pending-transaction retrieval and restoration.
+- Cumulative chain-work calculation.
+- Difficulty adjustment every ten blocks with bounded adjustment timespans.
+- Median-Time-Past and future-timestamp validation.
+- Durable persistence of canonical blocks and losing fork blocks.
+- Canonical chain selection using cumulative work and the protocol tie-break.
+- Chain reorganization with transaction recovery from abandoned branches.
+- Bounded orphan-block storage and retry when missing parents arrive.
+- Restart loading of canonical state, forks, transactions, height, tip, and
+  work.
 
-### Mempool
+The normal state flow is:
 
-- Pending transaction management
-- Transaction validation before acceptance
-- Pending transaction retrieval
-- Mempool clearing after successful mining
+```text
+Transaction -> validation -> mempool -> mining -> block validation
+-> canonical selection/reorganization -> PostgreSQL persistence
+```
 
-### Mining
+## Peer-to-Peer Network
 
-- Proof-of-Work mining
-- Configurable mining difficulty
-- Mining rewards
-- Miner reward transactions
-- Mining progress output
-- Persistent mined blocks
-- Persistent mined transactions
-- Atomic database persistence for blocks and transactions
+The P2P implementation in [`backend/p2p/`](backend/p2p/) provides:
 
-### Mining Pool
+- TCP transport.
+- Newline-delimited JSON protocol envelopes.
+- Protocol version and network-ID validation.
+- Persistent node identity files.
+- Handshake and peer metadata exchange.
+- Block and transaction relay, including multi-hop relay.
+- Header and block synchronization using `GET_HEADERS`/`HEADERS` and
+  block requests.
+- Orphan handling and missing-parent recovery.
+- Accepted-block and transaction duplicate suppression.
+- Established-session STATUS refresh.
+- Bounded reconnect attempts with exponential backoff.
+- Exact-session cleanup so an old socket cannot remove a replacement session.
+- Connection, message-size, request-rate, peer-count, and orphan limits.
+- Malformed-message rejection and peer violation tracking.
+- A multiprocessing private multi-node testnet harness for convergence,
+  partitions, restarts, reorganization, orphan recovery, and long runs.
 
-- Mining pool database model
-- Miner/worker registration model
-- Mining job model
-- Mining share model
-- Mining pool repositories
-- Miner repositories
-- Mining job repositories
-- Share repositories
-- Pool job generation
-- Share submission foundation
-- Pool share difficulty
-- Network difficulty and pool difficulty separation
-- Accepted/rejected share tracking
-- Block-candidate detection foundation
-- Persisted pool analytics snapshots and share acceptance statistics
-- Paginated job, share, payout, and analytics history
-- Authenticated miner worker with retries, heartbeats, and graceful shutdown
-- Bounded operational monitoring endpoint
+P2P uses the same canonical Mainnet network ID and genesis identity as the
+blockchain engine. It is optional for an HTTP-only deployment.
 
-The mining pool is currently under active development.
+## Mining Pool
 
-## Database
+The pool subsystem implements:
 
-- PostgreSQL
-- Neon cloud PostgreSQL
-- SQLAlchemy
-- Persistent blockchain records
-- Persistent block records
-- Persistent transaction records
-- Persistent wallet records
-- Mining pool persistence
-- Miner persistence
-- Mining job persistence
-- Mining share persistence
-- Repository pattern
-- Mapper pattern
-- Blockchain recovery from PostgreSQL
+- Pool creation and miner/worker registration.
+- One-time worker API-key issuance.
+- Job creation and job lookup.
+- Share submission and share validation.
+- Separate pool-share difficulty and network difficulty.
+- Block-candidate detection.
+- Payout accounting and canonical/orphan reconciliation.
+- Persisted jobs, shares, payouts, and analytics.
+- Paginated history endpoints and bounded monitoring.
+- Worker heartbeat and shutdown operations.
 
-## REST API
+Worker API keys are stored hashed rather than as plaintext credentials.
 
-Current API functionality includes:
+Current pool limitations:
 
-- Blockchain status
-- Blockchain retrieval
-- Blockchain health check
-- Wallet creation
-- Wallet balance lookup
-- Transaction creation
-- Transaction submission
-- Transaction lookup
-- Block mining
+- Simulated single-node pool.
+- No Stratum protocol.
+- No distributed chain-tip locking.
+- No adaptive difficulty.
+- No PPS/PPLNS payout distribution.
+- No credential rotation.
+- No general pool rate limiting.
+- No real payout transfers or external real-money settlement.
 
-Mining pool endpoints include:
+## Web3 and Hedera
 
-- `POST /pool` and `POST /pool/<id>/miners` (registration returns a
-  one-time bearer token)
-- `GET /pool/<id>/job` and `POST /pool/share`
-- `GET /pool/<id>/payouts`, `/miners/<id>/payouts`, `/shares`, and `/jobs`
-  (all accept `page` and bounded `page_size`)
-- `GET /pool/<id>/analytics` for persisted snapshots and statistical
-  acceptance-rate/hash-rate summaries
-- `GET /pool/<id>/monitoring?limit=25` (the limit is capped server-side)
-- `POST /pool/<id>/miners/<miner_id>/heartbeat` and `/shutdown`
-
-Workers send `Authorization: Bearer <token>`. Configure worker operation with
-`MINER_POLL_INTERVAL`, `MINER_HEARTBEAT_INTERVAL`, `MINER_REQUEST_TIMEOUT`,
-`MINER_MAX_RETRIES`, `MINER_RETRY_BACKOFF`, and `MINER_MAX_NONCE`.
-`MINER_START_NONCE` can partition nonce work across workers.
-An operational worker can be started with `python -m miner.worker` after
-setting `MINER_POOL_URL`, `MINER_POOL_ID`, and `MINER_WALLET_ADDRESS`
-(optionally `MINER_WORKER_NAME` and `MINER_AUTH_TOKEN`).
+Hedera Testnet/Web3 integration is optional and external to NovaCoin
+consensus. It can be used for an external anchor or contract interaction; it
+does not determine block validity, mining, chain selection, balances, or
+network identity. Do not place private keys or other secrets in the
+repository. Configure them only through deployment-managed environment
+variables when the optional integration is explicitly used.
 
 ## Architecture
 
 ```text
-                         Frontend
-                            |
-                            v
-                       Flask REST API
-                            |
-                            v
-                    Blockchain Engine
-                     /            \
-                    /              \
-               Mempool            Mining
-                    \              /
-                     \            /
-                      v          v
-                    Database Layer
-                          |
-              +-----------+-----------+
-              |           |           |
-           Models      Mappers   Repositories
-              |           |           |
-              +-----------+-----------+
-                          |
-                          v
-                   PostgreSQL / Neon
+                         Dependency-free frontend
+                                   |
+                                   v
+                              Flask API
+                          /       |        \
+                         /        |         \
+                 Blockchain     Mining     Mining Pool
+                    engine        |       jobs/shares/payouts
+                 /       \        |             |
+                /         \       |             v
+        Mempool       Consensus / validation  Analytics
+                \         /
+                 \       /
+              PostgreSQL / Neon
+                    ^
+                    |
+             durable forks and state
 
+                 TCP P2P network
+             handshake / relay / sync
+                    |
+                    v
+              Blockchain engine
 
-                     Mining Pool
-                          |
-              +-----------+-----------+
-              |           |           |          |
-            Miners      Jobs        Shares    Analytics
-              |           |           |
-              +-----------+-----------+
-                          |
-                          v
-                    Pool Accounting
+      Optional external Hedera Testnet / Web3 integration
+      (not part of NovaCoin consensus)
 ```
-## Structure
+
+## Project Structure
+
 ```text
 backend/
-|
-├── blockchain/
-│   ├── __init__.py
-│   ├── block.py
-│   ├── blockchain.py
-│   ├── mempool.py
-│   ├── proof_of_work.py
-│   ├── transaction.py
-│   ├── transaction_validator.py
-│   └── wallet.py
-|
-├── database/
-│   ├── __init__.py
-│   ├── blockchain_loader.py
-│   ├── migrations/
-│   │   ├── 0001_mining_pool.sql
-│   │   └── runner.py
-│   ├── postgres.py
-│   │
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── blockchain_model.py
-│   │   ├── block_model.py
-│   │   ├── transaction_model.py
-│   │   └── wallet_model.py
-│   │
-│   ├── mapper/
-│   │   ├── __init__.py
-│   │   ├── blockchain_mapper.py
-│   │   ├── block_mapper.py
-│   │   ├── transaction_mapper.py
-│   │   └── wallet_mapper.py
-│   │
-│   └── repository/
-│       ├── __init__.py
-│       ├── blockchain_repository.py
-│       ├── block_repository.py
-│       ├── transaction_repository.py
-│       └── wallet_repository.py
-|
-├── miner/
-│   ├── worker.py
-│   └── pool_analytics_service.py
-├── routes/
-├── utils/
-├── tests/
-|
 ├── app.py
 ├── config.py
 ├── requirements.txt
-└── README.md
-```
-## Technology Stack
-- Python
+├── requirements-dev.txt
+├── blockchain/
+│   ├── block.py
+│   ├── blockchain.py
+│   ├── mempool.py
+│   ├── money.py
+│   ├── proof_of_work.py
+│   ├── protocol.py
+│   ├── transaction.py
+│   ├── transaction_validator.py
+│   └── wallet.py
+├── database/
+│   ├── blockchain_loader.py
+│   ├── block_persistence.py
+│   ├── postgres.py
+│   ├── migrations/
+│   │   ├── 0001_mining_pool.sql
+│   │   ├── 0002_network_namespace.sql
+│   │   ├── 0003_network_symbol_constraint.sql
+│   │   ├── 0004_transaction_fees.sql
+│   │   ├── 0005_durable_forks.sql
+│   │   └── runner.py
+│   ├── mapper/
+│   ├── models/
+│   └── repository/
+├── miner/
+├── p2p/
+├── routes/
+└── tests/
 
-- Flask
+frontend/
+├── index.html
+├── blockchain.html
+├── mining.html
+├── pools.html
+├── transactions.html
+├── wallet.html
+└── sandbox.html
 
-- Flask-CORS
-
-- SQLAlchemy
-
-- PostgreSQL
-
-- Neon
-
-- ECDSA / secp256k1
-
-- SHA-256
-
-- BLAKE2b
-
-- Git / GitHub
-
-## Persistence
-
-Blockchain state is persisted in PostgreSQL.
-
-The application can:
-
-- Create a blockchain record.
-
-- Persist the genesis block.
-
-- Persist mined blocks.
-
-- Persist transactions.
-
-- Recover blocks after restarting Flask.
-
-- Recover transactions after restarting Flask.
-
-- Recalculate wallet balances from recovered blockchain data.
-
-The block and its transactions are persisted together using a database transaction so incomplete persistence can be rolled back.
-
-Mining pool entities are also persisted in PostgreSQL, including pools, miners, jobs, and shares.
-
-## Project Status
-
-The project is under active development.
-
-The blockchain core, Proof-of-Work mining, wallet system, signed transactions, transaction validation, mempool, REST API, PostgreSQL persistence, persistent mining, blockchain recovery, and mining pool database foundation are implemented.
-
-The mining pool service includes job distribution, share validation, pool difficulty, reward accounting, worker heartbeats, and bounded monitoring.
-
-The dependency-free frontend is implemented as separate technical pages for the
-dashboard, blockchain explorer, mining flow, pool operations, transactions,
-wallet lookup, and educational sandbox. It uses the read-only APIs described
-below and labels unsupported browser operations instead of fabricating controls.
-External cryptocurrency integration, Web3 integration, and cloud deployment
-remain future work.
-
-## Mining Pool Operations
-
-The pool uses a layered design: Flask routes validate HTTP requests, pool services enforce job/share rules, repositories access PostgreSQL, and SQLAlchemy models persist pools, miners, jobs, shares, and payout accounting. A pool job contains an exact block template. Workers reconstruct it with the project `Transaction.from_dict()` and `Block.calculate_hash()` implementation; they never write pool records directly.
-
-### Worker registration and authentication
-
-`POST /pool/<pool_id>/miners` returns the miner metadata and a one-time `worker_api_key`. The server stores only its SHA-256 hash. The worker sends the raw credential in `X-Worker-API-Key` for job requests, share submissions, and heartbeats. Normal pool, miner, statistics, jobs, and share responses never expose the credential.
-
-### Job lifecycle
-
-Jobs are owned by one miner and move from `active` to `completed`, `stale`, or `expired`.
-
-- A job is stale when its previous hash no longer matches the chain tip.
-- A job expires after `POOL_JOB_TTL_SECONDS` (120 seconds by default).
-- Completed, stale, and expired jobs reject shares.
-- Each job embeds a system reward transaction for its owning worker wallet; a different miner cannot submit the winning result.
-
-### Pool API
-
-- `POST /pool` — create a pool for the persisted blockchain.
-- `POST /pool/<pool_id>/miners` — register a worker and obtain its one-time API key.
-- `GET /pool/<pool_id>/job?miner_id=<id>&miner_address=<address>` — authenticated job request.
-- `POST /pool/share` — authenticated share submission.
-- `POST /pool/<pool_id>/miners/<miner_id>/heartbeat` — authenticated worker activity update.
-- `GET /pool/<pool_id>`, `/miners`, `/miners/<miner_id>` — pool/miner status and accounting.
-- `GET /pool/<pool_id>/jobs` and `/shares` — paginated operational history (`limit`, `offset`; maximum limit 100).
-- `GET /pool/<pool_id>/payouts` and `/miners/<miner_id>/payouts` — payout accounting history.
-
-Pool and miner hash rates are observed worker-reported rates (`hashes_checked / elapsed_seconds`) supplied in authenticated heartbeats and share submissions. They are operational estimates rather than a claim of measured hardware capacity. Pool statistics include accepted/rejected counts and rates, block/payout totals, gross rewards, fees, and net miner rewards.
-
-### Payout accounting
-
-For a successful pool block, the system records one payout in the same database transaction as the block, transactions, winning share, and job completion:
-
-```text
-pool_fee = embedded_reward × fee_percent / 100
-miner_reward = embedded_reward - pool_fee
+web3/
+├── contracts/
+├── scripts/
+└── hardhat.config.js
 ```
 
-The accounting record does not alter the existing system reward transaction or create a separate wallet ledger.
+## HTTP API
 
-### Simulated worker
+Core endpoints include:
 
-Run the worker after registering a miner:
+- `GET /health`
+- `GET /chain`
+- `GET /mempool`
+- `GET /wallet/new`
+- `GET /wallet/<address>`
+- `POST /transaction`
+- `POST /transaction/create`
+- `GET /transaction/<txid>`
+- `POST /mine`
+- `GET /p2p/status`
+
+Pool endpoints include pool creation, miner registration, jobs, share
+submission, payouts, shares, analytics, monitoring, heartbeat, and shutdown.
+See [`backend/routes/`](backend/routes/) for the route definitions and
+authentication requirements.
+
+## Frontend
+
+The dependency-free frontend contains:
+
+- `index.html` — dashboard and network overview.
+- `blockchain.html` — blockchain explorer and mempool display.
+- `mining.html` — mining and Proof-of-Work interface.
+- `pools.html` — pool, worker, job, share, payout, and analytics views.
+- `transactions.html` — transaction lookup and mempool information.
+- `wallet.html` — wallet balance lookup.
+- `sandbox.html` — educational browser-local simulation.
+
+The real frontend pages display or call NovaCoin backend state. The Sandbox
+is intentionally separate: it simulates wallets, transactions, hashes,
+Proof-of-Work, blocks, confirmations, and rewards in the browser and does not
+write to the NovaCoin database or alter the real chain. Optional Hedera/Web3
+actions are external integrations and are also separate from consensus.
+
+## Database and Migrations
+
+Production persistence uses PostgreSQL or Neon through SQLAlchemy. The
+application loads the canonical Mainnet namespace and persists blocks,
+transactions, canonical state, forks, and pool records. Private wallet keys
+are not persisted by the backend database.
+
+Run ordered migrations explicitly:
 
 ```powershell
 cd backend
-.\venv\Scripts\python.exe -m miner.worker `
-  --api-base-url http://127.0.0.1:5000 `
-  --pool-id 1 --miner-id 1 --miner-address <wallet-address> `
-  --api-key <one-time-registration-key> `
-  --max-runtime-seconds 60
+python -m database.migrations.runner
 ```
 
-Useful controls include `--nonce-start`, `--max-nonce`, `--max-shares`, `--request-delay-seconds`, and `--heartbeat-interval-seconds`. The worker only sends a request when a nonce meets the pool share target, reloads after terminal job responses, and prints attempts, shares, blocks, elapsed time, and approximate hash rate.
+The migration runner records applied versions in `schema_migrations` and
+does not reset or truncate existing tables. `AUTO_MIGRATE=true` can be used
+for a controlled deployment, but explicit migration execution is preferred.
 
-### Current limitations
+## Deployment
 
-This is a simulated single-node pool. It does not implement a Stratum protocol, distributed chain-tip locking, adaptive difficulty, PPS/PPLNS payout distribution, credential rotation, rate limiting, or actual payout transfers. Schema changes require an explicit migration; `db.create_all()` does not alter existing Neon tables.
-
-## Frontend pages
-
-Serve the `frontend/` directory over HTTP and open `index.html`:
-
-- `index.html` — independent blockchain, mempool, and system overview.
-- `blockchain.html` — `/chain` block explorer and `/mempool` state.
-- `mining.html` — Proof-of-Work flow and CLI worker architecture.
-- `pools.html` — pool selection, monitoring, workers, jobs, shares, and payouts.
-- `transactions.html` — transaction lookup and mempool state.
-- `wallet.html` — read-only `/wallet/<address>` balance lookup.
-- `sandbox.html` — real versus educational project boundaries.
-
-The browser does not store worker API keys or private keys. Browser mining,
-wallet creation, transaction signing controls, and MetaMask/Web3 are not
-exposed by the current API.
-
-## Production-readiness workflow
-The runner creates `schema_migrations`, applies ordered files in
-`backend/database/migrations/`, and safely skips versions already recorded.
-The initial migration is additive: it bootstraps the documented blockchain
-tables on a fresh database and adds missing pool columns, keys, and indexes to
-an existing Neon schema without dropping tables or columns.
-It does not connect to a database during tests. Local SQLite test fixtures
-continue to use `create_all()` and are created and dropped per test.
-
-The PostgreSQL application startup path does not modify an existing schema.
-Set `AUTO_MIGRATE=true` only for a controlled deployment that intentionally
-runs the same migration runner at startup. Keep `DATABASE_URL` out of source
-control and rotate worker credentials if they are exposed.
-
-Run the backend checks from the backend directory:
+### Runtime dependencies
 
 ```powershell
-python -m compileall -q .
-python -m pytest -q
+python -m venv backend/venv
+backend/venv/Scripts/python.exe -m pip install -r backend/requirements.txt
 ```
 
-Pool routes validate input before invoking services; services own job,
-share, payout, and concurrency rules; repositories own database access; and
-models define persistence constraints. Integration tests use isolated
-in-memory SQLite and do not require a live PostgreSQL server.
+For tests and development tooling:
+
+```powershell
+backend/venv/Scripts/python.exe -m pip install -r backend/requirements-dev.txt
+```
+
+### Required environment variables
+
+Use deployment-managed environment variables. At minimum:
+
+```text
+DATABASE_URL=postgresql://user:password@host/database
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5000
+FLASK_DEBUG=false
+CORS_ORIGINS=https://your-frontend.example
+```
+
+The SQLite fallback is for tests and local development only. Never commit
+`DATABASE_URL`.
+
+### P2P configuration
+
+P2P is disabled unless explicitly enabled:
+
+```text
+P2P_ENABLED=true
+P2P_NETWORK_ID=novacoin-mainnet-v1
+P2P_HOST=0.0.0.0
+P2P_PORT=18444
+P2P_ADVERTISED_HOST=public-node.example
+P2P_ADVERTISED_PORT=18444
+P2P_BOOTSTRAP_PEERS=seed1.example:18444,seed2.example:18444
+P2P_NODE_ID_PATH=/var/lib/novacoin/node.json
+```
+
+The application rejects a P2P network ID other than
+`novacoin-mainnet-v1`. Keep the node identity path persistent across
+restarts. P2P currently runs in the application process, so use one
+application process when P2P is enabled.
+
+### Start the application
+
+Run migrations before startup, then use a production WSGI server:
+
+```powershell
+cd backend
+python -m database.migrations.runner
+gunicorn app:app
+```
+
+Gunicorn is the recommended production command and should be installed in
+the deployment environment if it is not supplied by the platform. For a
+simple local smoke test, the Flask module can be started with:
+
+```powershell
+cd backend
+python -m app
+```
+
+### Health check
+
+```text
+GET /health
+```
+
+The response reports application liveness, database connectivity, database
+type, blockchain initialization, Mainnet network ID, canonical height, tip,
+and chain work. It does not expose secrets, database credentials, or private
+wallet keys.
+
+## Security Notes
+
+- Never commit `DATABASE_URL` or any other deployment secret.
+- Never commit Hedera, Web3, wallet, or worker private keys.
+- Private wallet keys are not returned by the backend API.
+- Worker API keys are stored hashed.
+- Configure `CORS_ORIGINS` explicitly for the deployed frontend; do not use
+  unrestricted wildcard CORS in production.
+- Keep P2P identity files and database credentials outside source control.
+- Set `FLASK_DEBUG=false` in deployment environments.
+
+## Testing and Development Commands
+
+From the repository root:
+
+```powershell
+$env:PYTHONPATH = "backend"
+backend/venv/Scripts/python.exe -m pytest backend/tests -q
+backend/venv/Scripts/python.exe -m compileall -q backend
+node --check frontend/app.js
+git diff --check
+```
+
+The private testnet and P2P scenario tests use isolated local SQLite
+databases. They do not reset or modify a production Neon database.
+
+## Project Status
+
+Implemented components:
+
+- Canonical NovaCoin Mainnet protocol and deterministic genesis.
+- SHA-256 Proof-of-Work mining and block validation.
+- Signed secp256k1 transactions, fees, coinbase rules, and mempool.
+- Cumulative-work chain selection, reorganization, and orphan recovery.
+- PostgreSQL/Neon persistence with durable forks and restart loading.
+- TCP P2P handshake, relay, synchronization, STATUS refresh, and bounded
+  reconnect handling.
+- Mining pool registration, jobs, shares, accounting, analytics, and worker
+  lifecycle endpoints.
+- Flask REST API and dependency-free frontend pages.
+- Optional external Hedera Testnet/Web3 integration.
+
+Limitations:
+
+- This is an educational/student network, not a production-grade public
+  cryptocurrency.
+- It has no real monetary value.
+- The pool is simulated and does not perform real-money settlement.
+- The frontend Sandbox is educational and separate from real chain state.
+- Hedera/Web3 integration is optional and external to consensus.
+- Operational concerns such as production key custody, multi-region
+  deployment, Stratum compatibility, and real economic security are outside
+  the project scope.
