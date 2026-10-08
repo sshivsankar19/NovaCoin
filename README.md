@@ -1,5 +1,4 @@
 # NovaCoin (NVC)
-# Blockchain Crypto Miner
 
 NovaCoin is a custom educational and simulated cryptocurrency network. It
 implements a deterministic blockchain, signed transactions, SHA-256
