@@ -1,7 +1,15 @@
 (() => {
   "use strict";
 
-  const API_BASE = window.MINING_API_BASE || "http://127.0.0.1:5000";
+  const isLocalHost = (
+    window.location.hostname === "localhost"
+    || window.location.hostname === "127.0.0.1"
+  );
+  const API_BASE = window.MINING_API_BASE || (
+    isLocalHost
+      ? "http://127.0.0.1:5000"
+      : "https://novacoin-backend.onrender.com"
+  );
   const PAGE_SIZE = 25;
   const page = document.body.dataset.page;
   const state = {
