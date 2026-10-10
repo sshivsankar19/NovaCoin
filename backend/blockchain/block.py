@@ -1,8 +1,8 @@
-import hashlib
 import json
 from datetime import datetime, timezone
 UTC = timezone.utc
 from blockchain.transaction import Transaction
+from blockchain.hashing import proof_of_work_hex
 
 
 class Block:
@@ -13,6 +13,8 @@ class Block:
         previous_hash: str,
         difficulty: int = 3,
         nonce: int = 0,
+        algorithm: str = "SHA256_PROOF_OF_WORK",
+        protocol_version: int = 1,
     ):
         self.index = index
         self.timestamp = datetime.now(UTC).isoformat()
@@ -20,6 +22,8 @@ class Block:
         self.previous_hash = previous_hash
         self.difficulty = difficulty
         self.nonce = nonce
+        self.algorithm = algorithm
+        self.protocol_version = protocol_version
 
         self.hash = self.calculate_hash()
 
@@ -32,6 +36,9 @@ class Block:
             "difficulty": self.difficulty,
             "nonce": self.nonce,
         }
+        if self.protocol_version >= 2:
+            block_data["algorithm"] = self.algorithm
+            block_data["protocol_version"] = self.protocol_version
 
         encoded_block = json.dumps(
             block_data,
@@ -39,10 +46,10 @@ class Block:
             separators=(",", ":")
         ).encode()
 
-        return hashlib.sha256(encoded_block).hexdigest()
+        return proof_of_work_hex(encoded_block, self.algorithm)
     def to_dict(self):
 
-        return {
+        data = {
             "index": self.index,
             "timestamp": self.timestamp,
             "transactions": [
@@ -54,6 +61,10 @@ class Block:
             "nonce": self.nonce,
             "hash": self.hash
         }
+        if self.protocol_version >= 2:
+            data["algorithm"] = self.algorithm
+            data["protocol_version"] = self.protocol_version
+        return data
     @classmethod
     def from_dict(cls, data):
 
@@ -67,7 +78,9 @@ class Block:
             transactions=transactions,
             previous_hash=data["previous_hash"],
             difficulty=data["difficulty"],
-            nonce=data["nonce"]
+            nonce=data["nonce"],
+            algorithm=data.get("algorithm", "SHA256_PROOF_OF_WORK"),
+            protocol_version=data.get("protocol_version", 1),
         )
 
         block.timestamp = data["timestamp"]

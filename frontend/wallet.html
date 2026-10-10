@@ -20,6 +20,7 @@
        <h2>Optional EVM wallet</h2>
        <p class="muted">MetaMask is separate from the native NovaCoin wallet. This page only requests account access and signs a non-broadcast test message.</p>
        <button id="connect-metamask" type="button">Connect MetaMask</button>
+       <button id="reset-metamask" class="secondary-button" type="button">Reset displayed account</button>
        <p id="web3-status" class="status-label" aria-live="polite">Checking for MetaMask…</p>
        <div id="web3-wallet-result" class="result empty">No MetaMask account connected.</div>
        <button id="switch-hedera-network" class="secondary-button" type="button" disabled>Switch to Hedera Testnet</button>
@@ -28,7 +29,34 @@
        <p id="web3-signature-result" class="status-label" aria-live="polite"></p>
        <p class="muted">The EVM address is not a NovaCoin address, has no NVC balance here, and cannot sign native NovaCoin transactions.</p>
       </article></section>
+      <section class="section"><article class="panel wallet-panel">
+       <p class="eyebrow">HEDERA TESTNET / tNVC</p>
+       <h2>Web3 test token</h2>
+       <p class="muted">This bounded ERC-20-compatible demonstration token is separate from native NVC and has no monetary value. Configure a deployed token address to enable these controls.</p>
+       <dl class="details">
+         <dt>Token</dt><dd>NovaCoin Web3 Test Token (tNVC)</dd>
+         <dt>Network</dt><dd>Hedera Testnet (chain ID 296)</dd>
+         <dt>Contract</dt><dd id="web3-token-address">Not configured</dd>
+         <dt>Balance</dt><dd id="web3-token-balance">Not available</dd>
+       </dl>
+       <div class="page-actions">
+         <button id="web3-token-refresh" class="secondary-button" type="button" disabled>Refresh token</button>
+         <button id="web3-token-claim" type="button" disabled>Request test tokens</button>
+       </div>
+       <form id="web3-token-transfer-form" class="lookup-form">
+         <label for="web3-token-recipient">Recipient EVM address</label>
+         <input id="web3-token-recipient" inputmode="text" autocomplete="off" placeholder="0x..." required>
+         <label for="web3-token-amount">Amount (tNVC)</label>
+         <input id="web3-token-amount" type="number" min="0" step="any" required>
+         <button id="web3-token-transfer" type="submit" disabled>Transfer test tokens</button>
+       </form>
+       <div id="web3-token-status" class="result empty">Connect MetaMask on Hedera Testnet and configure the token contract.</div>
+       <div id="web3-token-history" class="result empty">No token history loaded.</div>
+      </article></section>
     </main>
-    <footer><span>NovaCoin Network Console API</span><span id="api-endpoint"></span></footer><script src="app.js"></script>
+    <footer><span>NovaCoin Network Console API</span><span id="api-endpoint"></span></footer>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+    <script>window.NOVACOIN_WEB3_TOKEN_ADDRESS = window.NOVACOIN_WEB3_TOKEN_ADDRESS || "";</script>
+    <script src="app.js"></script>
   </body>
 </html>

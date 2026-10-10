@@ -11,6 +11,7 @@ import math
 import os
 import time
 from dataclasses import dataclass, field
+from urllib.parse import urlsplit
 
 import requests
 
@@ -19,11 +20,32 @@ from blockchain.transaction import Transaction
 
 
 MAX_NONCE = 2_147_483_647
+DEFAULT_API_BASE_URL = "http://127.0.0.1:5000"
+
+
+def resolve_api_base_url(cli_value=None, environ=None):
+    """Resolve and validate the worker API URL without exposing credentials."""
+    environment = os.environ if environ is None else environ
+    value = (
+        cli_value
+        or environment.get("NOVACOIN_API_BASE_URL")
+        or environment.get("MINER_POOL_URL")
+        or DEFAULT_API_BASE_URL
+    )
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("API base URL must be a non-empty HTTP(S) URL.")
+    value = value.strip().rstrip("/")
+    parsed = urlsplit(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("API base URL must be an HTTP(S) URL.")
+    if parsed.username or parsed.password:
+        raise ValueError("API base URL must not contain credentials.")
+    return value
 
 
 @dataclass
 class WorkerConfig:
-    api_base_url: str = "http://127.0.0.1:5000"
+    api_base_url: str | None = None
     pool_id: int = 0
     miner_id: int = 0
     miner_address: str = ""
@@ -43,6 +65,7 @@ class WorkerConfig:
     start_nonce: int | None = None
 
     def __post_init__(self):
+        self.api_base_url = resolve_api_base_url(self.api_base_url)
         if self.start_nonce is not None:
             self.nonce_start = self.start_nonce
         for name in ("nonce_start", "max_nonce"):
@@ -598,7 +621,11 @@ def _parse_args():
     )
     parser.add_argument(
         "--api-base-url",
-        default=os.getenv("MINER_POOL_URL", "http://127.0.0.1:5000")
+        default=None,
+        help=(
+            "Worker API base URL. Overrides NOVACOIN_API_BASE_URL, "
+            "then MINER_POOL_URL."
+        ),
     )
     parser.add_argument("--pool-id", type=int, default=_env_int("MINER_POOL_ID", 0))
     parser.add_argument("--miner-id", type=int, default=_env_int("MINER_ID", 0))
@@ -655,7 +682,7 @@ def main():
 
     worker = SimulatedMiningWorker(
         WorkerConfig(
-            api_base_url=args.api_base_url,
+            api_base_url=resolve_api_base_url(args.api_base_url),
             pool_id=args.pool_id,
             miner_id=args.miner_id,
             miner_address=args.miner_address,

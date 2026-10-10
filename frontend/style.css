@@ -1116,13 +1116,23 @@ h3 { font-size: 14px; font-weight: 650; letter-spacing: .01em; }
 .section-heading { margin-bottom: 18px; }
 .section-index { color: #66707b; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; }
 
-.panel, .directory-panel, .pool-control-bar {
-  background: rgba(17, 20, 25, .92);
-  border-color: var(--border);
-  border-radius: 3px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
+.panel,
+.directory-panel,
+.pool-control-bar {
+  background: rgba(17, 20, 25, 0.96);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
 }
-.panel { padding: 20px; }
+
+.panel {
+  padding: 20px;
+  transition: border-color 0.18s ease;
+}
+
+.panel:hover {
+  border-color: var(--border-strong);
+}
 .metric-grid { background: var(--border); border-color: var(--border); gap: 1px; }
 .metric { background: var(--surface); border-right: 0; padding: 16px; }
 .metric-value, code, .hash, table td:first-child {
@@ -1131,18 +1141,40 @@ h3 { font-size: 14px; font-weight: 650; letter-spacing: .01em; }
 .metric-value { color: var(--text); font-size: 17px; }
 input, select { background: #0d1014; border-color: var(--border-strong); border-radius: 3px; }
 input:focus, select:focus { border-color: var(--blue); }
+
 button {
   background: var(--blue);
   border: 1px solid var(--blue);
-  border-radius: 3px;
+  border-radius: 4px;
   color: #0b0d10;
+  cursor: pointer;
   font-size: 12px;
-  letter-spacing: .02em;
+  font-weight: 650;
+  letter-spacing: 0.01em;
   padding: 9px 13px;
-  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+  transition: background 0.16s ease, border-color 0.16s ease,
+    box-shadow 0.16s ease, transform 0.16s ease;
 }
-button:hover { background: #aab2ff; }
-button:disabled { cursor: not-allowed; opacity: .5; }
+
+button:hover:not(:disabled) {
+  background: #aab2ff;
+  border-color: #aab2ff;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
 .secondary-button, .text-button { background: transparent; border-color: var(--border-strong); color: var(--muted); }
 .secondary-button:hover, .text-button:hover { background: var(--surface-highlight); color: var(--text); text-decoration: none; }
 .notice { background: rgba(255, 95, 86, .08); border-left-color: var(--red); border-radius: 2px; }

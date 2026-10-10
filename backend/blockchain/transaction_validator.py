@@ -5,7 +5,9 @@ from blockchain.protocol import (
     get_block_subsidy,
     median_time_past,
     MAX_FUTURE_BLOCK_TIME_SECONDS,
+    MAINNET_V2,
 )
+from blockchain.proof_of_work import ProofOfWork
 from datetime import datetime, timedelta, timezone
 UTC = timezone.utc
 class TransactionValidator:
@@ -108,6 +110,16 @@ class TransactionValidator:
         if not getattr(blockchain, "mainnet_consensus", False):
             return False, "Mainnet block validation is not enabled."
         previous = blockchain.get_latest_block()
+        expected_protocol = getattr(blockchain, "protocol_version", 1)
+        expected_algorithm = getattr(
+            blockchain,
+            "algorithm",
+            "SHA256_PROOF_OF_WORK",
+        )
+        if block.protocol_version != expected_protocol:
+            return False, "Invalid block protocol version."
+        if block.algorithm != expected_algorithm:
+            return False, "Invalid block proof-of-work algorithm."
         if block.index != previous.index + 1:
             return False, "Invalid block index."
         if block.previous_hash != previous.hash:
@@ -125,9 +137,7 @@ class TransactionValidator:
             seconds=MAX_FUTURE_BLOCK_TIME_SECONDS
         ):
             return False, "Block timestamp is too far in the future."
-        if block.hash != block.calculate_hash():
-            return False, "Invalid block hash."
-        if not block.hash.startswith("0" * block.difficulty):
+        if not ProofOfWork.validate(block):
             return False, "Invalid proof of work."
         coinbases = [tx for tx in block.transactions if tx.is_coinbase]
         if len(coinbases) != 1:

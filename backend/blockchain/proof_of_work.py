@@ -13,7 +13,7 @@ class ProofOfWork:
                 print(
                     f"Mining... Nonce={block.nonce} Hash={block.hash[:12]}"
                 )
-            time.sleep(0.0001)  
+            time.sleep(0.0001)
             if block.hash.startswith(target):
                 print(f"\n Block mined!")
                 print(f"Nonce: {block.nonce}")
@@ -23,3 +23,16 @@ class ProofOfWork:
             block.nonce += 1
 
         return block
+
+    @staticmethod
+    def validate(block):
+        """Validate the selected algorithm and leading-zero target."""
+        if block.algorithm not in {
+            "SHA256_PROOF_OF_WORK",
+            "BLAKE2B_256",
+        }:
+            return False
+        return (
+            block.hash == block.calculate_hash()
+            and block.hash.startswith("0" * block.difficulty)
+        )

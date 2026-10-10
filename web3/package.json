@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:testnet": "hardhat run scripts/deploy.js --network hederaTestnet"
+    "deploy:testnet": "hardhat run scripts/deploy.js --network hederaTestnet",
+    "deploy:token:testnet": "hardhat run scripts/deploy-token.js --network hederaTestnet"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "6.1.0",

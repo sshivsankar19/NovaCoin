@@ -175,6 +175,10 @@ def _format_money(value):
     return format(Decimal(value or 0), "f")
 
 
+def _isoformat_or_none(value):
+    return value.isoformat() if value is not None else None
+
+
 def _serialize_job(job):
     return {
         "id": job.id,
@@ -188,13 +192,9 @@ def _serialize_job(job):
         "share_target": job.share_target,
         "block_data": job.block_data,
         "status": job.status,
-        "created_at": job.created_at.isoformat(),
-        "expires_at": job.expires_at.isoformat(),
-        "completed_at": (
-            job.completed_at.isoformat()
-            if job.completed_at
-            else None
-        )
+        "created_at": _isoformat_or_none(job.created_at),
+        "expires_at": _isoformat_or_none(job.expires_at),
+        "completed_at": _isoformat_or_none(job.completed_at),
     }
 
 

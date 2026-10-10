@@ -6,9 +6,9 @@ the canonical Mainnet identity declared here.
 """
 
 from dataclasses import dataclass
-import hashlib
 import json
 from datetime import datetime, timezone
+from blockchain.hashing import proof_of_work_hex
 
 
 ATOMIC_UNITS_PER_NVC = 100_000_000
@@ -50,7 +50,8 @@ def _genesis_hash() -> str:
         sort_keys=True,
         separators=(",", ":"),
     ).encode()
-    return hashlib.sha256(encoded).hexdigest()
+    from blockchain.hashing import sha256_hex
+    return sha256_hex(encoded)
 
 
 GENESIS_HASH = _genesis_hash()
@@ -69,6 +70,29 @@ class ProtocolConfig:
 
 
 MAINNET = ProtocolConfig()
+
+# V2 is deliberately a separate network identity. Its block format includes
+# the algorithm and protocol version, so V1 nodes cannot accept V2 history.
+V2_NETWORK_NAME = "NOVACOIN-MAINNET-V2"
+V2_NETWORK_ID = "novacoin-mainnet-v2"
+V2_PROTOCOL_VERSION = 2
+V2_ALGORITHM = "BLAKE2B_256"
+V2_GENESIS_NONCE = 3366
+V2_GENESIS_HASH = "00040b0ad998989a53f32659c385323647db3380617e188426edc2927b4684e8"
+MAINNET_V2 = ProtocolConfig(
+    network_name=V2_NETWORK_NAME,
+    network_id=V2_NETWORK_ID,
+    protocol_version=V2_PROTOCOL_VERSION,
+    algorithm=V2_ALGORITHM,
+)
+
+
+def protocol_for_network(network_id: str) -> ProtocolConfig:
+    if network_id == MAINNET_V2.network_id:
+        return MAINNET_V2
+    if network_id == MAINNET.network_id:
+        return MAINNET
+    raise ValueError(f"Unsupported NovaCoin network: {network_id}")
 
 
 def expected_difficulty(chain, next_height: int) -> int:

@@ -1,7 +1,7 @@
 from database.repository.blockchain_repository import BlockchainRepository
 from database.repository.block_repository import BlockRepository
 from database.mapper.block_mapper import BlockMapper
-from blockchain.protocol import MAINNET, GENESIS_HASH
+from blockchain.protocol import MAINNET, MAINNET_V2, GENESIS_HASH, V2_GENESIS_HASH
 from blockchain.transaction_validator import TransactionValidator
 
 
@@ -24,8 +24,13 @@ def initialize_blockchain(blockchain):
                 for model in blocks
             }
             tip_hash = persisted.canonical_tip_hash
+            genesis_hash = (
+                V2_GENESIS_HASH
+                if blockchain.network_id == MAINNET_V2.network_id
+                else GENESIS_HASH
+            )
             if not tip_hash:
-                tip_hash = GENESIS_HASH
+                tip_hash = genesis_hash
             chain = []
             current_hash = tip_hash
             while current_hash:
@@ -33,11 +38,11 @@ def initialize_blockchain(blockchain):
                 if current is None:
                     raise RuntimeError("Persisted Mainnet canonical tip is incomplete.")
                 chain.append(current)
-                if current.hash == GENESIS_HASH:
+                if current.hash == genesis_hash:
                     break
                 current_hash = current.previous_hash
             blockchain.chain = list(reversed(chain))
-            if not blockchain.chain or blockchain.chain[0].hash != GENESIS_HASH:
+            if not blockchain.chain or blockchain.chain[0].hash != genesis_hash:
                 raise RuntimeError("Persisted Mainnet genesis does not match canonical genesis.")
             for position, block in enumerate(blockchain.chain[1:], start=1):
                 candidate_chain = blockchain.chain

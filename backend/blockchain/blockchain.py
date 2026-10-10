@@ -9,6 +9,9 @@ from blockchain.protocol import (
     GENESIS_PREVIOUS_HASH,
     GENESIS_TIMESTAMP,
     MAINNET,
+    MAINNET_V2,
+    V2_GENESIS_HASH,
+    V2_GENESIS_NONCE,
     get_block_subsidy,
     block_work,
     expected_difficulty,
@@ -29,6 +32,7 @@ class Blockchain:
         block_persister=None,
         network_id=MAINNET.network_id,
         mainnet_consensus=False,
+        protocol_version=None,
     ):
 
         self.name = name
@@ -40,6 +44,13 @@ class Blockchain:
         self.block_persister = block_persister
         self.network_id = network_id
         self.mainnet_consensus = mainnet_consensus
+        self.protocol = MAINNET_V2 if network_id == MAINNET_V2.network_id else MAINNET
+        self.protocol_version = (
+            self.protocol.protocol_version
+            if protocol_version is None else protocol_version
+        )
+        if self.mainnet_consensus:
+            self.algorithm = self.protocol.algorithm
         if self.mainnet_consensus and self.difficulty != MAINNET.initial_difficulty:
             raise ValueError("Mainnet difficulty must match the canonical initial difficulty.")
         self.db_id = None
@@ -55,7 +66,9 @@ class Blockchain:
             index=0,
             transactions=[],
             previous_hash=GENESIS_PREVIOUS_HASH,
-            difficulty=self.difficulty
+            difficulty=self.difficulty,
+            algorithm=self.algorithm,
+            protocol_version=self.protocol_version,
         )
         if (
             self.network_id == MAINNET.network_id
@@ -64,6 +77,13 @@ class Blockchain:
             genesis_block.timestamp = GENESIS_TIMESTAMP
             genesis_block.nonce = GENESIS_NONCE
             genesis_block.hash = GENESIS_HASH
+        elif (
+            self.network_id == MAINNET_V2.network_id
+            and self.difficulty == MAINNET_V2.initial_difficulty
+        ):
+            genesis_block.timestamp = GENESIS_TIMESTAMP
+            genesis_block.nonce = V2_GENESIS_NONCE
+            genesis_block.hash = V2_GENESIS_HASH
 
         self.chain.append(genesis_block)
 
@@ -133,6 +153,8 @@ class Blockchain:
                 if self.mainnet_consensus
                 else self.difficulty
             ),
+            algorithm=self.algorithm,
+            protocol_version=self.protocol_version,
         )
 
     def accept_block(self, block):
@@ -179,6 +201,7 @@ class Blockchain:
             create_genesis=False,
             network_id=self.network_id,
             mainnet_consensus=True,
+            protocol_version=self.protocol_version,
         )
         candidate.chain = list(candidate_chain)
         if not candidate.is_chain_valid():
@@ -333,7 +356,12 @@ class Blockchain:
         return True
 
     def _is_mainnet_chain_valid(self):
-        if not self.chain or self.chain[0].hash != GENESIS_HASH:
+        genesis_hash = (
+            V2_GENESIS_HASH
+            if self.network_id == MAINNET_V2.network_id
+            else GENESIS_HASH
+        )
+        if not self.chain or self.chain[0].hash != genesis_hash:
             return False
         for position in range(1, len(self.chain)):
             previous_chain = self.chain[:position]
@@ -342,6 +370,7 @@ class Blockchain:
                 create_genesis=False,
                 network_id=self.network_id,
                 mainnet_consensus=True,
+                protocol_version=self.protocol_version,
             )
             candidate.chain = previous_chain
             valid, _ = TransactionValidator.validate_block(
@@ -362,6 +391,8 @@ class Blockchain:
             "symbol": self.symbol,
 
             "algorithm": self.algorithm,
+            "network_id": self.network_id,
+            "protocol_version": self.protocol_version,
 
             "difficulty": self.difficulty,
 
@@ -410,7 +441,11 @@ class Blockchain:
             ),
             create_genesis=False
             ,
-            network_id=data.get("network_id", MAINNET.network_id)
+            network_id=data.get("network_id", MAINNET.network_id),
+            mainnet_consensus=data.get(
+                "network_id", MAINNET.network_id
+            ) in {MAINNET.network_id, MAINNET_V2.network_id},
+            protocol_version=data.get("protocol_version"),
         )
 
         blockchain.chain = [

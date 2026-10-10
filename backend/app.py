@@ -43,6 +43,14 @@ if app.config.get("P2P_ENABLED"):
         raise RuntimeError(
             "P2P_NETWORK_ID must equal the NovaCoin Mainnet network ID."
         )
+    if (
+        app.config["P2P_HOST"] in {"0.0.0.0", "::"}
+        and app.config["P2P_ADVERTISED_HOST"] in {"", "0.0.0.0", "::"}
+    ):
+        raise RuntimeError(
+            "P2P_ADVERTISED_HOST must be an explicit reachable host when "
+            "P2P binds to a wildcard address."
+        )
     def _peer_address(value):
         host, separator, port = value.rpartition(":")
         if not separator:
@@ -109,11 +117,16 @@ def p2p_status():
     if p2p is None:
         return {
             "enabled": False,
+            "public_reachability": "disabled",
             "network_id": chain.network_id,
             "peer_count": 0,
             "sync_state": "disabled",
         }
-    return {"enabled": True, **p2p.status()}
+    return {
+        "enabled": True,
+        "public_reachability": "unverified",
+        **p2p.status(),
+    }
 @app.route("/chain")
 def get_chain():
     return chain.to_dict()

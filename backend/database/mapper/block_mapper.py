@@ -20,7 +20,9 @@ class BlockMapper:
             previous_hash=block.previous_hash,
             nonce=block.nonce,
             difficulty=block.difficulty,
-            timestamp=timestamp
+            timestamp=timestamp,
+            algorithm=getattr(block, "algorithm", "SHA256_PROOF_OF_WORK"),
+            protocol_version=getattr(block, "protocol_version", 1),
         )
 
     @staticmethod
@@ -47,7 +49,9 @@ class BlockMapper:
             transactions=transactions,
             previous_hash=model.previous_hash,
             difficulty=model.difficulty,
-            nonce=model.nonce
+            nonce=model.nonce,
+            algorithm=getattr(model, "algorithm", "SHA256_PROOF_OF_WORK"),
+            protocol_version=getattr(model, "protocol_version", 1),
         )
 
         from datetime import timezone

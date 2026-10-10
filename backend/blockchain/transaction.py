@@ -1,4 +1,3 @@
-import hashlib
 import json
 from datetime import datetime, timezone
 UTC = timezone.utc
@@ -6,6 +5,7 @@ UTC = timezone.utc
 from ecdsa import BadSignatureError
 from ecdsa import SECP256k1
 from ecdsa import VerifyingKey
+from blockchain.hashing import sha256_then_blake2b_hex
 
 SYSTEM_ADDRESS = "SYSTEM"
 class Transaction:
@@ -41,14 +41,7 @@ class Transaction:
             separators=(",", ":")
         ).encode()
 
-        sha256_hash = hashlib.sha256(encoded).digest()
-
-        txid = hashlib.blake2b(
-            sha256_hash,
-            digest_size=32
-        ).hexdigest()
-
-        return txid
+        return sha256_then_blake2b_hex(encoded)
 
     def sign(self, wallet):
         if self._signed:

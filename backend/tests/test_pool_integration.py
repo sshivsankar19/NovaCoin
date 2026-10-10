@@ -1,5 +1,7 @@
 """End-to-end pool API coverage using only disposable SQLite state."""
 
+from routes import pool_routes
+
 def _register(client, chain, wallet="a" * 64):
     pool_response = client.post(
         "/pool",
@@ -97,6 +99,41 @@ def test_monitoring_analytics_pagination_and_shutdown(pool_app):
     assert shutdown.status_code == 200
     assert shutdown.get_json()["miner"]["status"] == "offline"
     assert shutdown.get_json()["miner"]["last_seen"]
+
+
+def test_monitoring_serializes_job_with_null_expiration(pool_app, monkeypatch):
+    app, chain = pool_app
+    client = app.test_client()
+    pool, miner, key = _register(client, chain)
+    headers = {"X-Worker-API-Key": key}
+
+    job_response = client.get(
+        f"/pool/{pool['id']}/job",
+        query_string={
+            "miner_id": miner["id"],
+            "miner_address": miner["wallet_address"],
+        },
+        headers=headers,
+    )
+    assert job_response.status_code == 200
+    job = pool_routes.MiningJobRepository.get_by_pool_page(
+        pool["id"], 1, 25
+    )[0][0]
+    from database.postgres import db
+    db.session.expunge(job)
+    job.expires_at = None
+    monkeypatch.setattr(
+        pool_routes.MiningJobRepository,
+        "get_by_pool_page",
+        lambda pool_id, page, page_size: ([job], 1),
+    )
+
+    monitoring = client.get(f"/pool/{pool['id']}/monitoring?limit=25")
+
+    assert monitoring.status_code == 200
+    body = monitoring.get_json()
+    assert body["jobs"][0]["expires_at"] is None
+    assert body["active_jobs"][0]["expires_at"] is None
 
 
 def test_malformed_activity_is_rejected_before_service(pool_app):

@@ -1,7 +1,7 @@
 from email.mime import message
-import hashlib
 from ecdsa import SigningKey, VerifyingKey, SECP256k1
 from ecdsa import BadSignatureError
+from blockchain.hashing import sha256_then_blake2b_hex
 
 class Wallet:
 
@@ -24,16 +24,7 @@ class Wallet:
 
         public_key_bytes = public_key.to_string()
 
-        sha256_hash = hashlib.sha256(
-            public_key_bytes
-        ).digest()
-
-        address = hashlib.blake2b(
-            sha256_hash,
-            digest_size=32
-        ).hexdigest()
-
-        return address
+        return sha256_then_blake2b_hex(public_key_bytes)
     def __repr__(self):
 
         return f"Wallet({self.address[:16]}...)"

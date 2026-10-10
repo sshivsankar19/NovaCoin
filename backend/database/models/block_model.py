@@ -47,3 +47,15 @@ class BlockModel(db.Model):
         db.DateTime,
         nullable=False
     )
+
+    algorithm = db.Column(
+        db.String(50),
+        nullable=False,
+        default="SHA256_PROOF_OF_WORK",
+    )
+
+    protocol_version = db.Column(
+        db.Integer,
+        nullable=False,
+        default=1,
+    )

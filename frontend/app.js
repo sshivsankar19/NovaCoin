@@ -39,6 +39,8 @@
     web3ChainId: null,
     web3Balance: null,
     web3Signature: null,
+    web3TokenBalance: null,
+    web3TokenHistory: [],
     hederaAnchor: null,
     selectedAnchorBlock: null,
   };
@@ -210,6 +212,144 @@
       : "Connect MetaMask and select Hedera Testnet to use the external NovaCoin anchor.";
   }
 
+  const WEB3_TOKEN_ABI = [
+    "function balanceOf(address account) view returns (uint256)",
+    "function decimals() view returns (uint8)",
+    "function symbol() view returns (string)",
+    "function claim() returns (bool)",
+    "function transfer(address to, uint256 amount) returns (bool)",
+    "event Transfer(address indexed from, address indexed to, uint256 value)",
+  ];
+
+  function web3TokenAddress() {
+    return window.NOVACOIN_WEB3_TOKEN_ADDRESS || "";
+  }
+
+  function tokenReady() {
+    return Boolean(
+      state.web3Provider
+      && state.web3Address
+      && state.web3ChainId?.toLowerCase() === "0x128"
+      && web3TokenAddress()
+      && window.ethers,
+    );
+  }
+
+  function renderWeb3Token() {
+    const address = $("web3-token-address");
+    const balance = $("web3-token-balance");
+    const status = $("web3-token-status");
+    const refresh = $("web3-token-refresh");
+    const claim = $("web3-token-claim");
+    const transfer = $("web3-token-transfer");
+    if (!address || !balance || !status || !refresh || !claim || !transfer) return;
+    address.innerHTML = web3TokenAddress()
+      ? copyButton(web3TokenAddress(), "Copy tNVC contract address")
+      : "Not configured";
+    balance.textContent = state.web3TokenBalance === null
+      ? "Not available"
+      : `${state.web3TokenBalance} tNVC`;
+    const ready = tokenReady();
+    refresh.disabled = !ready;
+    claim.disabled = !ready;
+    transfer.disabled = !ready;
+    status.className = `result${ready ? "" : " empty"}`;
+    status.textContent = ready
+      ? "Hedera Testnet token controls are ready. Every transaction requires MetaMask approval."
+      : "Connect MetaMask on Hedera Testnet and configure the token contract.";
+    const history = $("web3-token-history");
+    if (history) {
+      history.className = `result${state.web3TokenHistory.length ? "" : " empty"}`;
+      history.innerHTML = state.web3TokenHistory.length
+        ? `<strong>Recent Transfer events</strong><ul>${state.web3TokenHistory.map((event) => `
+            <li>${escapeHtml(event.direction)} ${escapeHtml(event.amount)} tNVC · ${copyButton(event.transactionHash, "Copy token transaction hash")}</li>
+          `).join("")}</ul>`
+        : "No token history loaded.";
+    }
+  }
+
+  async function refreshWeb3Token() {
+    if (!tokenReady()) {
+      renderWeb3Token();
+      return;
+    }
+    const provider = new window.ethers.BrowserProvider(state.web3Provider);
+    const contract = new window.ethers.Contract(web3TokenAddress(), WEB3_TOKEN_ABI, provider);
+    const [rawBalance, decimals, symbol] = await Promise.all([
+      contract.balanceOf(state.web3Address),
+      contract.decimals(),
+      contract.symbol(),
+    ]);
+    state.web3TokenBalance = window.ethers.formatUnits(rawBalance, decimals);
+    const latestBlock = await provider.getBlockNumber();
+    const events = await contract.queryFilter(
+      contract.filters.Transfer(),
+      Math.max(0, latestBlock - 2000),
+      latestBlock,
+    );
+    const account = state.web3Address.toLowerCase();
+    state.web3TokenHistory = events
+      .filter((event) => (
+        String(event.args.from).toLowerCase() === account
+        || String(event.args.to).toLowerCase() === account
+      ))
+      .slice(-10)
+      .reverse()
+      .map((event) => ({
+        transactionHash: event.transactionHash,
+        amount: window.ethers.formatUnits(event.args.value, decimals),
+        symbol,
+        direction: String(event.args.from).toLowerCase() === account ? "sent" : "received",
+      }));
+    renderWeb3Token();
+  }
+
+  async function submitWeb3TokenTransaction(action) {
+    if (!tokenReady()) {
+      showNotice("Connect MetaMask on Hedera Testnet and configure the test-token contract.");
+      return;
+    }
+    const status = $("web3-token-status");
+    status.className = "result";
+    status.textContent = "Awaiting MetaMask approval...";
+    try {
+      const provider = new window.ethers.BrowserProvider(state.web3Provider);
+      const network = await provider.getNetwork();
+      if (network.chainId !== 296n) throw new Error("Switch MetaMask to Hedera Testnet.");
+      const signer = await provider.getSigner();
+      const contract = new window.ethers.Contract(web3TokenAddress(), WEB3_TOKEN_ABI, signer);
+      const transaction = await action(contract);
+      status.textContent = `Pending: ${transaction.hash}`;
+      const receipt = await transaction.wait();
+      if (!receipt || receipt.status !== 1) throw new Error("The token transaction did not succeed.");
+      status.textContent = `Confirmed: ${receipt.hash || transaction.hash}`;
+      await refreshWeb3Token();
+    } catch (error) {
+      status.textContent = error?.code === 4001 || error?.message?.toLowerCase().includes("user rejected")
+        ? "Transaction rejected by user."
+        : `Transaction failed: ${error?.shortMessage || error?.message || "unknown error"}`;
+      showNotice(status.textContent);
+    }
+  }
+
+  async function claimWeb3Tokens() {
+    await submitWeb3TokenTransaction((contract) => contract.claim());
+  }
+
+  async function transferWeb3Tokens(event) {
+    event.preventDefault();
+    const recipient = $("web3-token-recipient").value.trim();
+    const amount = $("web3-token-amount").value.trim();
+    if (!window.ethers || !window.ethers.isAddress(recipient) || !amount || Number(amount) <= 0) {
+      showNotice("Enter a valid recipient address and positive token amount.");
+      return;
+    }
+    await submitWeb3TokenTransaction(async (contract) => {
+      const decimals = await contract.decimals();
+      return contract.transfer(recipient, window.ethers.parseUnits(amount, decimals));
+    });
+  }
+
   async function refreshWeb3Account() {
     const accounts = await state.web3Provider.request({ method: "eth_accounts" });
     state.web3Address = accounts[0] || null;
@@ -223,6 +363,7 @@
       state.web3Balance = Number(window.ethers?.formatEther(raw) || (Number(BigInt(raw)) / 1e18).toFixed(4)).toFixed(4);
     }
     renderWeb3Wallet();
+    await refreshWeb3Token();
   }
 
   async function switchToHedera() {
@@ -256,6 +397,17 @@
       renderWeb3Wallet();
       return;
     }
+
+    function resetWeb3Account() {
+      state.web3Address = null;
+      state.web3ChainId = null;
+      state.web3Balance = null;
+      state.web3Signature = null;
+      state.web3TokenBalance = null;
+      state.web3TokenHistory = [];
+      renderWeb3Wallet();
+      renderWeb3Token();
+    }
     $("web3-status").textContent = "Requesting MetaMask account access...";
     $("connect-metamask").disabled = true;
     try {
@@ -265,6 +417,7 @@
       state.web3Balance = null;
       state.web3Signature = null;
       renderWeb3Wallet();
+      await refreshWeb3Token();
       if (!state.web3Address) {
         showNotice("MetaMask did not return an account.");
       }
@@ -1550,8 +1703,12 @@
       $("wallet-form").addEventListener("submit", lookupWallet);
       $("create-wallet").addEventListener("click", createWallet);
       $("connect-metamask").addEventListener("click", connectMetaMask);
+      $("reset-metamask")?.addEventListener("click", resetWeb3Account);
       $("switch-hedera-network")?.addEventListener("click", switchToHedera);
       $("sign-web3-message").addEventListener("click", signWeb3TestMessage);
+      $("web3-token-refresh")?.addEventListener("click", () => refreshWeb3Token().catch((error) => showNotice(error.message)));
+      $("web3-token-claim")?.addEventListener("click", claimWeb3Tokens);
+      $("web3-token-transfer-form")?.addEventListener("submit", transferWeb3Tokens);
       initializeWeb3Wallet();
     }
     if (page === "mining") {

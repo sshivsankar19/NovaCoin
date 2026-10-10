@@ -69,6 +69,23 @@ Transaction -> validation -> mempool -> mining -> block validation
 -> canonical selection/reorganization -> PostgreSQL persistence
 ```
 
+### Hashing compatibility
+
+The native protocol keeps its existing hashing identities:
+
+- Block and genesis hashes: canonical JSON bytes encoded as UTF-8, then
+  lowercase SHA-256 hex.
+- Wallet addresses: raw public-key bytes, SHA-256 raw digest, then BLAKE2b
+  with a 32-byte digest, encoded as lowercase hex.
+- Transaction IDs: canonical transaction JSON bytes encoded as UTF-8,
+  SHA-256 raw digest, then BLAKE2b with a 32-byte digest, encoded as lowercase
+  hex.
+
+These operations are implemented in
+[`backend/blockchain/hashing.py`](backend/blockchain/hashing.py) and covered
+by known-answer and Mainnet compatibility tests. BLAKE2b is not a NovaCoin
+Proof-of-Work or consensus hash.
+
 ## Peer-to-Peer Network
 
 The P2P implementation in [`backend/p2p/`](backend/p2p/) provides:
@@ -93,6 +110,11 @@ The P2P implementation in [`backend/p2p/`](backend/p2p/) provides:
 
 P2P uses the same canonical Mainnet network ID and genesis identity as the
 blockchain engine. It is optional for an HTTP-only deployment.
+
+The private testnet harness starts each node with its own SQLite database,
+identity file, and TCP port. It exercises bidirectional synchronization,
+reconnects, restarts, stale-session cleanup, duplicate suppression, orphan
+recovery, reorganization, and convergence without touching Neon.
 
 ## Mining Pool
 
@@ -122,14 +144,117 @@ Current pool limitations:
 - No general pool rate limiting.
 - No real payout transfers or external real-money settlement.
 
+### Mining worker connectivity
+
+The standalone worker communicates with the pool over HTTP(S). Its API base
+URL precedence is:
+
+1. `--api-base-url` command-line option;
+2. `NOVACOIN_API_BASE_URL` environment variable;
+3. legacy `MINER_POOL_URL` environment variable;
+4. local default `http://127.0.0.1:5000`.
+
+The operator registers a miner with `POST /pool/<pool-id>/miners` and receives
+a one-time API key. The standalone CLI then uses the supplied pool ID, miner
+ID, wallet address, and API key for job, share, heartbeat, and shutdown
+requests through the `X-Worker-API-Key` header. Pool and miner identifiers,
+wallet addresses, and the worker API key must be supplied by the operator;
+the examples below use placeholders and the worker never prints the key.
+
+Remote Render example:
+
+```powershell
+cd C:\path\to\Blockchain_crypto_miner\backend
+$env:NOVACOIN_API_BASE_URL = "https://novacoin-backend.onrender.com"
+python -m miner.worker `
+  --pool-id <pool-id> `
+  --miner-id <miner-id> `
+  --miner-address <64-character-novacoin-wallet-address> `
+  --api-key <worker-api-key> `
+  --worker-name <worker-name>
+```
+
+The CLI option overrides the environment variable when both are set:
+
+```powershell
+python -m miner.worker `
+  --api-base-url "https://novacoin-backend.onrender.com" `
+  --pool-id <pool-id> `
+  --miner-id <miner-id> `
+  --miner-address <64-character-novacoIn-wallet-address> `
+  --api-key <worker-api-key>
+```
+
+Local development example:
+
+```powershell
+cd C:\Users\sshiv\Desktop\Project\backend
+$env:NOVACOIN_API_BASE_URL = "http://127.0.0.1:5000"
+python -m miner.worker `
+  --pool-id <pool-id> `
+  --miner-id <miner-id> `
+  --miner-address <64-character-novacoIn-wallet-address> `
+  --api-key <worker-api-key>
+```
+
+Remote mining requires an existing pool and registered miner. The deployed
+backend must be reachable over HTTPS and the worker API key must be issued by
+that same pool; local database records and local API keys are not portable to
+the Render deployment.
+
 ## Web3 and Hedera
 
 Hedera Testnet/Web3 integration is optional and external to NovaCoin
-consensus. It can be used for an external anchor or contract interaction; it
-does not determine block validity, mining, chain selection, balances, or
-network identity. Do not place private keys or other secrets in the
-repository. Configure them only through deployment-managed environment
-variables when the optional integration is explicitly used.
+consensus. It does not determine block validity, mining, chain selection,
+native balances, or network identity. The existing `NovaCoinAnchor` contract
+stores selected native block hashes. The separate
+`NovaCoinWeb3TestToken` contract is an ERC-20-compatible demonstration token:
+
+- Name: `NovaCoin Web3 Test Token`
+- Symbol: `tNVC`
+- Network: Hedera Testnet, chain ID `296`
+- Fixed initial supply: `1,000,000 tNVC`
+- Bounded faucet allocation: `100,000 tNVC`
+- Per-claim amount: `100 tNVC`
+- Per-address claim limit: `500 tNVC`
+
+The token is not native NVC, is not redeemable for NVC, and has no monetary
+value. Its `claim()` function distributes only the bounded allocation and
+does not mint without limit. Every browser transfer or claim requires
+explicit MetaMask approval. The wallet page can read balances, request a
+bounded claim, transfer to a valid EVM address, and display recent incoming
+`Transfer` events after a deployed token address is configured.
+
+To compile and test the contracts:
+
+```powershell
+cd web3
+npm install
+npm test
+```
+
+Deployments are never automatic. Use a local ignored `web3/.env` containing
+`HEDERA_PRIVATE_KEY` and, if needed, `HEDERA_RPC_URL`:
+
+```powershell
+cd web3
+npm run deploy:testnet
+npm run deploy:token:testnet
+```
+
+Set the resulting token address in the served frontend configuration:
+
+```html
+<script>
+  window.NOVACOIN_WEB3_TOKEN_ADDRESS = "0x<deployed-token-address>";
+</script>
+```
+
+Do not commit the private key or replace an existing contract automatically.
+Verify deployment and transaction hashes on
+[HashScan](https://hashscan.io/testnet) before using the UI. MetaMask must be
+switched to Hedera Testnet. Native NovaCoin hashes, Hedera anchor hashes, and
+EVM token transaction hashes remain separate values with separate meanings.
 
 ## Architecture
 
@@ -319,6 +444,16 @@ The application rejects a P2P network ID other than
 `novacoin-mainnet-v1`. Keep the node identity path persistent across
 restarts. P2P currently runs in the application process, so use one
 application process when P2P is enabled.
+
+P2P is not enabled on the deployed Render free HTTP service. Render web
+services do not provide a public arbitrary-TCP listener for this protocol;
+the HTTP port being reachable does not make `P2P_PORT` reachable to peers.
+Leave `P2P_ENABLED=false` there unless the service is moved to infrastructure
+that provides a public TCP listener, firewall rules, stable advertised host
+and port, persistent node identity storage, and appropriate monitoring.
+`/p2p/status` reports the configured listener state, not proof of external
+reachability. Public reachability must be verified from an independent host
+before advertising a node to peers.
 
 ### Start the application
 
