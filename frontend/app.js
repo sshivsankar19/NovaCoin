@@ -451,24 +451,40 @@
     }
   }
 
+  
   function initializeWeb3Wallet() {
     state.web3Provider = getWeb3Provider();
     renderWeb3Wallet();
+
     if (!state.web3Provider) {
       return;
     }
-    state.web3Provider.on?.("accountsChanged", (accounts) => {
-      state.web3Address = accounts[0] || null;
-      state.web3Signature = null;
-      refreshWeb3Account().catch((error) => showNotice(error.message));
-    });
-    state.web3Provider.on?.("chainChanged", (chainId) => {
-      state.web3ChainId = chainId;
-      state.web3Signature = null;
-      refreshWeb3Account().catch((error) => showNotice(error.message));
-    });
+
+    // Provider event listeners are optional.
+    // A Web3 provider issue must not block native NovaCoin features.
+    try {
+      const provider = state.web3Provider;
+
+      if (typeof provider.on === "function") {
+        provider.on("accountsChanged", (accounts) => {
+          state.web3Address = accounts[0] || null;
+          state.web3Signature = null;
+          refreshWeb3Account().catch((error) => showNotice(error.message));
+        });
+
+        provider.on("chainChanged", (chainId) => {
+          state.web3ChainId = chainId;
+          state.web3Signature = null;
+          refreshWeb3Account().catch((error) => showNotice(error.message));
+        });
+      }
+    } catch (error) {
+      console.warn("Web3 provider event listeners unavailable:", error);
+    }
+
     refreshWeb3Account().catch((error) => showNotice(error.message));
   }
+
 
   const HEDERA_ANCHOR_ABI = [
     "function anchorBlock(uint256 novaBlockIndex, bytes32 blockHash)",
