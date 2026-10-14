@@ -912,12 +912,12 @@
       await loadMempool();
       renderMiningOperation();
       renderHederaAnchor();
-      showNotice("Real backend mining completed.", false);
+      showNotice("Block mined.", false);
     } catch (error) {
       state.miningStatus = "error";
       renderMiningOperation();
       showNotice(error.name === "AbortError"
-        ? "Mining timed out while waiting for the backend."
+        ? "Failed to mine the block."
         : error.message);
     } finally {
       window.clearTimeout(timeout);

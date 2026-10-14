@@ -1228,3 +1228,16 @@ body[data-page="sandbox"] .page-intro::after {
   .inline-form input, .lookup-form input, .create-pool-form input, .lookup-form button, .inline-form button { min-width: 0; width: 100%; }
   .table-wrap { overflow-x: auto; }
 }
+
+/* Notification states */
+.notice-success {
+  background: rgba(53, 199, 89, 0.08);
+  border-left-color: var(--green);
+  color: #b9f6d0;
+}
+
+.notice-error {
+  background: rgba(255, 95, 86, 0.08);
+  border-left-color: var(--red);
+  color: #f2c7ca;
+}
