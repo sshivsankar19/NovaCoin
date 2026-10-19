@@ -57,9 +57,10 @@ def test_migrations_are_idempotent_without_a_live_database():
         "0004_transaction_fees",
         "0005_durable_forks",
         "0006_block_protocol",
+        "0007_mining_cooldowns",
     ]
     assert run_migrations(engine) == []
-    assert len(engine.connection.executed_scripts) == 6
+    assert len(engine.connection.executed_scripts) == 7
 
 
 def test_fresh_migration_bootstraps_core_and_pool_tables():

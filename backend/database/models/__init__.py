@@ -8,3 +8,4 @@ from .mining_job_model import MiningJobModel
 from .share_model import ShareModel
 from .payout_model import PayoutModel
 from .pool_analytics_model import PoolAnalyticsModel
+from .mining_cooldown_model import MiningCooldownModel

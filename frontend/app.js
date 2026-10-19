@@ -451,7 +451,7 @@
     }
   }
 
-  
+
   function initializeWeb3Wallet() {
     state.web3Provider = getWeb3Provider();
     renderWeb3Wallet();
@@ -656,9 +656,16 @@
         throw new Error("API returned invalid JSON.");
       }
     }
+
     if (!response.ok) {
-      throw new Error(body?.error || `API request failed (${response.status})`);
+      const error = new Error(
+        body?.error || `API request failed (${response.status})`
+      );
+      error.status = response.status;
+      error.retry_after_seconds = body?.retry_after_seconds;
+      throw error;
     }
+
     return body;
   }
 
@@ -779,6 +786,7 @@
     const latest = blocks[blocks.length - 1] || {};
     const poolStats = state.pool?.statistics || {};
     const monitor = state.monitoring || {};
+
     const metrics = [
       ["Chain height", latest.index],
       ["Algorithm", state.chain?.algorithm],
@@ -788,7 +796,9 @@
       ["Mempool status", state.mempool ? "Available" : "Not available"],
       ["Active miners", monitor.active_miner_count],
       ["Active jobs", monitor.active_job_count],
-      ["Pool hashrate", monitor.hash_rate],
+      ["Pool hashrate", monitor.hash_rate == null
+        ? null
+        : `${formatNumber(monitor.hash_rate)} H/s`],
     ];
     if ($("dashboard-metrics")) {
       $("dashboard-metrics").innerHTML = metrics.map(([label, value]) => `
@@ -887,43 +897,66 @@
     status.textContent = "No mining request made.";
   }
 
+
   async function mineBlock(event) {
     event.preventDefault();
     const address = $("mine-address").value.trim();
+
     if (!address) {
       showNotice("Enter or generate a miner wallet address.");
       return;
     }
+
     const button = $("mine-button");
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 120000);
+
     state.miningStatus = "mining";
     state.lastMinedBlock = null;
     renderMiningOperation();
     button.disabled = true;
+
     const startedAt = performance.now();
+
     try {
       const response = await api.mine(address, controller.signal);
       state.lastMinedBlock = response.block;
       state.hederaAnchor = null;
       state.miningDuration = Math.round(performance.now() - startedAt);
       state.miningStatus = "success";
+
       await loadChain();
       await loadMempool();
+
       renderMiningOperation();
       renderHederaAnchor();
       showNotice("Block mined.", false);
     } catch (error) {
       state.miningStatus = "error";
       renderMiningOperation();
-      showNotice(error.name === "AbortError"
-        ? "Failed to mine the block."
-        : error.message);
+
+      const retryAfter = error.retry_after_seconds;
+
+      if (retryAfter > 0) {
+        const minutes = Math.floor(retryAfter / 60);
+        const seconds = retryAfter % 60;
+
+        showNotice(
+          `Mining cooldown active. Try again in ${minutes}m ${seconds}s.`
+        );
+      } else {
+        showNotice(
+          error.name === "AbortError"
+            ? "Mining request timed out."
+            : error.message
+        );
+      }
     } finally {
       window.clearTimeout(timeout);
       button.disabled = false;
     }
   }
+
 
   function renderMiningBlock() {
     const target = $("mining-block-state");
@@ -1405,6 +1438,43 @@
     }
   }
 
+  async function loadDashboardPool() {
+    try {
+      const response = await api.pools();
+      state.pools = response.pools || [];
+
+      // Prefer the currently selected pool, otherwise use the first available pool.
+      const selectedId = state.poolId;
+      const selectedPool = state.pools.find(
+        (pool) => String(pool.id) === String(selectedId)
+      ) || state.pools[0];
+
+      if (!selectedPool) {
+        state.pool = null;
+        state.monitoring = null;
+        renderDashboard();
+        return;
+      }
+
+      state.poolId = selectedPool.id;
+
+      const [pool, monitoring] = await Promise.all([
+        api.pool(selectedPool.id),
+        api.monitoring(selectedPool.id),
+      ]);
+
+      state.pool = pool;
+      state.monitoring = monitoring;
+      renderDashboard();
+    } catch (error) {
+      state.pool = null;
+      state.monitoring = null;
+      renderDashboard();
+      console.error("Dashboard pool data unavailable:", error);
+    }
+  }
+
+
   async function loadPool() {
     if (!state.poolId) {
       showNotice("Enter a pool ID before loading pool operations.");
@@ -1752,6 +1822,7 @@
     if (page === "dashboard") {
       loadChain();
       loadMempool();
+      loadDashboardPool();
     } else if (page === "blockchain") {
       loadChain();
       loadMempool();

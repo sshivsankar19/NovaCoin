@@ -1,5 +1,9 @@
 import os
-
+import threading
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from database.models.mining_cooldown_model import MiningCooldownModel
 from flask import Flask
 from flask import request
 from flask_cors import CORS
@@ -79,6 +83,34 @@ if app.config.get("P2P_ENABLED"):
         orphan_ttl=app.config["P2P_ORPHAN_TTL_SECONDS"],
     )
     p2p.start()
+MINING_COOLDOWN_SECONDS = 10 * 60
+_mining_locks = {}
+_mining_locks_guard = threading.Lock()
+
+
+def get_mining_lock(wallet_address):
+    with _mining_locks_guard:
+        if wallet_address not in _mining_locks:
+            _mining_locks[wallet_address] = threading.Lock()
+        return _mining_locks[wallet_address]
+
+
+def get_cooldown_remaining(wallet_address):
+    record = db.session.get(MiningCooldownModel, wallet_address)
+
+    if record is None:
+        return 0
+
+    last_mined_at = record.last_mined_at
+
+    # SQLite may return a naive datetime even when timezone=True.
+    if last_mined_at.tzinfo is None:
+        last_mined_at = last_mined_at.replace(tzinfo=timezone.utc)
+
+    now = datetime.now(timezone.utc)
+    remaining = MINING_COOLDOWN_SECONDS - (now - last_mined_at).total_seconds()
+
+    return max(0, int(remaining + 0.999))
 @app.route("/")
 def home():
     return {
@@ -137,24 +169,58 @@ def wallet_balance(address):
         "address": address,
         "balance": chain.get_balance(address)
     }
+
 @app.route("/mine", methods=["POST"])
 def mine():
+    data = request.get_json(silent=True) or {}
+    miner = data.get("miner")
 
-    data = request.get_json()
+    if not isinstance(miner, str) or not miner.strip():
+        return {"error": "Miner address is required."}, 400
 
-    if not data or "miner" not in data:
-        return {
-            "error": "Miner address is required."
-        }, 400
+    miner = miner.strip()
 
-    chain.mine_pending_transactions(data["miner"])
-    if p2p is not None:
-        p2p.broadcast_block(chain.chain[-1])
+    with get_mining_lock(miner):
+        try:
+            remaining = get_cooldown_remaining(miner)
 
-    return {
-        "message": "Block mined successfully.",
-        "block": chain.chain[-1].to_dict()
-    }
+            if remaining > 0:
+                return {
+                    "error": "Mining cooldown active.",
+                    "retry_after_seconds": remaining
+                }, 429
+
+            # Only start the cooldown after mining succeeds.
+            chain.mine_pending_transactions(miner)
+
+            now = datetime.now(timezone.utc)
+            cooldown = db.session.get(MiningCooldownModel, miner)
+
+            if cooldown is None:
+                cooldown = MiningCooldownModel(
+                    wallet_address=miner,
+                    last_mined_at=now
+                )
+                db.session.add(cooldown)
+            else:
+                cooldown.last_mined_at = now
+
+            db.session.commit()
+
+            if p2p is not None:
+                p2p.broadcast_block(chain.chain[-1])
+
+            return {
+                "message": "Block mined successfully.",
+                "block": chain.chain[-1].to_dict(),
+                "cooldown_seconds": MINING_COOLDOWN_SECONDS
+            }
+
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Manual mining failed")
+            return {"error": "Mining failed. Please try again."}, 500
+
 @app.route("/transaction", methods=["POST"])
 def add_transaction():
 
