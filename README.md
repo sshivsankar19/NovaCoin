@@ -5,6 +5,8 @@ implements a deterministic blockchain, signed transactions, SHA-256
 Proof-of-Work, durable PostgreSQL/Neon persistence, a TCP peer-to-peer
 network, a mining-pool foundation, and a dependency-free browser frontend.
 It is a student project and has no real monetary value.
+# Live Link : https://novacoin-m004.onrender.com
+Note response time might be high due to server inactivity.
 
 ## Technology
 
